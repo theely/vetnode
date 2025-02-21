@@ -1,0 +1,47 @@
+# Define GPU values template
+Value id (\d+:\d+:\d+\.\d+)
+Value moduleId (\d+)
+Value model (\S+ \S+ \S+)
+Value temp (\d+)
+Value memoryTotal (\d+)
+Value memoryUsed (\d+)
+Value eccModeCurrent (\S+)
+Value eccModePending (\S+)
+Value List eccErrorType (Volatile|Aggregate)
+Value List sramCorrectable (\d+)
+Value List sramUncorrectableParity (\d+)
+Value List sramUncorrectableSecDed (\d+)
+Value List dramCorrectable (\d+)
+Value List dramUncorrectable (\d+)
+
+# Allway starts in 'Start' state.
+Start
+  ^GPU ${id} -> GPUInfo
+
+# GPU Record
+GPUInfo
+  ^\s+Product Name\s+: ${model}
+  ^\s+Module ID\s+: ${moduleId}
+  ^\s+FB Memory Usage -> MemoryInfo
+  ^\s+ECC Mode -> ECCMode
+  ^\s+ECC Errors -> ECCErrors
+  ^\s+GPU Current Temp\s+: ${temp} -> Record Start
+
+MemoryInfo
+  ^\s+Total\s+: ${memoryTotal}
+  ^\s+Used\s+: ${memoryUsed} -> GPUInfo
+
+ECCMode
+  ^\s+Current\s+: ${eccModeCurrent}
+  ^\s+Pending\s+: ${eccModePending} -> GPUInfo
+
+ECCErrors
+  ^\s+${eccErrorType}$$
+  ^\s+SRAM Correctable\s+: ${sramCorrectable} 
+  ^\s+SRAM Uncorrectable Parity\s+: ${sramUncorrectableParity}
+  ^\s+SRAM Uncorrectable SEC-DED\s+: ${sramUncorrectableSecDed}
+  ^\s+DRAM Correctable\s+: ${dramCorrectable}
+  ^\s+DRAM Uncorrectable\s+: ${dramUncorrectable} -> Continue
+  ^\s+Aggregate Uncorrectable SRAM Sources -> GPUInfo
+
+# An implicit EOF state outputs the last record.
