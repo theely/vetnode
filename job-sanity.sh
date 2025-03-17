@@ -14,11 +14,12 @@ echo "╚█████╔╝╚██████╔╝██████╔�
 echo " ╚════╝  ╚═════╝ ╚═════╝     ╚══════╝╚═╝╚═╝     ╚═╝"
                                                    
 
-cd  /capstor/scratch/cscs/palmee/Shrike
-rm -r .venv-shrike
-python3 -m venv .venv-shrike
+rm -rf shrike-deploy
+git clone https://github.com/theely/shrike.git shrike-deploy
+cd shrike-deploy
+python3.11 -m venv .venv-shrike
 source .venv-shrike/bin/activate
-python3 -m pip --no-cache-dir install --upgrade pip
+python -m pip --no-cache-dir install --upgrade pip
 pip install --no-cache-dir -r ./requirements.txt
 cd src
-python3 -m shrike diagnose ../templates/simple-config.yaml
+python -m shrike diagnose ../templates/simple-config.yaml
