@@ -1,6 +1,6 @@
 import asyncio
 import click
-
+import traceback
 from shrike.configuration import Configuration
 
 @click.command()
@@ -16,6 +16,7 @@ def diagnose(config) -> None:
     for result in results:
         if isinstance(result, Exception):
             print(f"Unexpected exception: {result}")
+            traceback.print_tb(result.__traceback__)
         else:
             click.echo(f"{result}")
         
