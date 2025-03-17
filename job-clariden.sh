@@ -27,6 +27,11 @@ touch /users/palmee/shrike-deploy/sanity-results.txt
 
 srun python -m shrike diagnose ../templates/simple-config.yaml >> /users/palmee/shrike-deploy/sanity-results.txt
 
-grep '^Cordon:' /users/palmee/shrike-deploy/sanity-results.txt | awk '{print $2}' | paste -sd ',' > cordoned-nodes.txt
+# Exclude approach
+# grep '^Cordon:' /users/palmee/shrike-deploy/sanity-results.txt | awk '{print $2}' | paste -sd ',' > cordoned-nodes.txt
+# srun -N $(grep -c '^Vetted:' /users/palmee/shrike-deploy/sanity-results.txt) --exclude=$(cat cordoned-nodes.txt) hostname
 
-srun -N $(grep -c '^Vetted:' /users/palmee/shrike-deploy/sanity-results.txt) --exclude=$(cat cordoned-nodes.txt) hostname
+# Free-up approach
+grep '^Vetted:' /users/palmee/shrike-deploy/sanity-results.txt | awk '{print $2}' > vetted-nodes.txt
+salloc -N $(wc -l < vetted-nodes.txt) --nodefile=vetted-nodes.txt
+srun hostname
