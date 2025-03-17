@@ -21,6 +21,7 @@ class NvidiaSMICommand:
       gpus_data = self.parser.ParseText(raw_command_output) #string
 
       gpus_info = [dict(zip(self.parser.header, row)) for row in gpus_data]
+      print(gpus_info)
       return NvidiaSMIOutput(**{"gpus":gpus_info})
     
    async def _execute(self): 
