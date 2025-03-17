@@ -1,5 +1,5 @@
 [project]
-name = "example_package_YOUR_USERNAME_HERE"
+name = "shrink"  #HealthyNodes #SmoothRun #NodeSelector #FitOnes, #Fitness #OnlyFit #ClusterTherapy
 version = "0.0.1"
 authors = [
   { name="Example Author", email="author@example.com" },
