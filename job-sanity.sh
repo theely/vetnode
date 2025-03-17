@@ -2,7 +2,7 @@
 
 #SBATCH --nodes=1
 #SBATCH --time=0-00:15:00
-
+#SBATCH --account=a-csstaff
 
 #Disclaimer: this script is ficitisuos (only prints strings) and it's meant as a joke 
 
