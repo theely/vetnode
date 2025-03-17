@@ -49,5 +49,5 @@ if [ $(wc -l < vetted-nodes.txt) -ge $REQUIRED_NODES ]; then
     srun -N $REQUIRED_NODES --exclude=./cordoned-nodes.txt $MAIN_JOB_COMMAND
 else
     echo "Job canceled!"
-    echo "Rrason: too few vetted nodes."
+    echo "Reason: too few vetted nodes."
 fi
