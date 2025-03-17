@@ -1,6 +1,7 @@
 import asyncio
 import click
 import traceback
+import socket  
 from shrike.configuration import Configuration
 
 @click.command()
@@ -12,14 +13,20 @@ def diagnose(config) -> None:
     click.echo(f"Loading configuration: {configuration.name}")
 
     results = asyncio.run(run_evals(configuration.evals))
-
+    failed:bool=False
     for result in results:
         if isinstance(result, Exception):
-            print(f"Unexpected exception: {result}")
-            traceback.print_tb(result.__traceback__)
+            #print(f"Unexpected exception: {result}")
+            #traceback.print_tb(result.__traceback__)
+            failed=True
         else:
-            click.echo(f"{result}")
-        
+            if not result.passed:
+                failed=True
+            #click.echo(f"{result}")
+
+    if failed:
+          click.echo(socket.gethostname())
+
 
 async def run_evals(evals):
     tasks = [eval.eval() for eval in evals]
