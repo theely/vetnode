@@ -1,3 +1,4 @@
+
 from typing import  Annotated, ClassVar, List, Tuple, Type, Union
 from click import Path
 from pydantic import Field
@@ -11,11 +12,12 @@ from pydantic_settings import (
 from shrike.evaluations.ping import PingEval
 from shrike.evaluations.gpu_eval import GPUEval
 from shrike.evaluations.internet_access import InternetAccessEval
+from shrike.evaluations.random import RandomEval
 
 
 
 Evals = Annotated[
-    Union[PingEval, GPUEval, InternetAccessEval],
+    Union[PingEval, GPUEval, InternetAccessEval, RandomEval],
     Field(discriminator="type")
 ]
 
