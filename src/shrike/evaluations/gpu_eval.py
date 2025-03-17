@@ -10,7 +10,7 @@ class GPUEval(BaseEval):
     name:str
     type: Literal["gpu-eval"]
     max_temp: int
-    max_memory_usage: float
+    max_used_memory: float
 
     async def eval(self)->Evaluation:
         eval:Evaluation = super().eval()
