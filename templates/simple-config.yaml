@@ -9,3 +9,5 @@ evals:
   type: gpu-eval
   max_temp:  80
   max_used_memory: 0.25
+- name: Random
+  type: random
