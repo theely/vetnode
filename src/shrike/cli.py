@@ -7,25 +7,27 @@ from shrike.configuration import Configuration
 @click.command()
 @click.argument("config", type=click.Path())
 def diagnose(config) -> None:
-
+    hostname:str = socket.gethostname()
     Configuration._yaml_file = config
     configuration = Configuration()
-    click.echo(f"Loading configuration: {configuration.name}")
+    click.echo(f"Running sanity checks: {configuration.name} on node:{hostname}")
 
     results = asyncio.run(run_evals(configuration.evals))
-    failed:bool=False
+    healthy:bool=True
     for result in results:
         if isinstance(result, Exception):
-            #print(f"Unexpected exception: {result}")
-            #traceback.print_tb(result.__traceback__)
-            failed=True
+            print(f"Unexpected exception: {result} on node:{hostname}")
+            traceback.print_tb(result.__traceback__)
+            healthy=False
         else:
             if not result.passed:
-                failed=True
-            #click.echo(f"{result}")
+                healthy=False
+            click.echo(f"Check result: {result} on node:{hostname}")
 
-    if failed:
-          click.echo(socket.gethostname())
+    if healthy:
+        click.echo(f"Vetted: {hostname}")
+    else:
+        click.echo(f"Cordon: {hostname}")
 
 
 async def run_evals(evals):

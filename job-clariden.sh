@@ -22,6 +22,11 @@ source .venv-shrike/bin/activate
 python -m pip --no-cache-dir install --upgrade pip
 pip install --no-cache-dir -r ./requirements.txt
 cd src
-touch /users/palmee/shrike-deploy/cordoned-nodes.txt
+rm /users/palmee/shrike-deploy/sanity-results.txt
+touch /users/palmee/shrike-deploy/sanity-results.txt
 
-srun python -m shrike diagnose ../templates/simple-config.yaml >> /users/palmee/shrike-deploy/cordoned-nodes.txt
+srun python -m shrike diagnose ../templates/simple-config.yaml >> /users/palmee/shrike-deploy/sanity-results.txt
+
+grep '^Cordon:' sanity-results.txt | awk '{print $2}' | paste -sd ',' > /users/palmee/shrike-deploy/cordoned-nodes.txt
+
+srun --exclude=$(cat /users/palmee/shrike-deploy/cordoned-nodes.txt) hostname

@@ -2,9 +2,9 @@ name: Simple Configuration
 evals:
 - name: Pinger
   type: ping-nodes
-- name: On-Web
-  type: internet-access
-  host:  8.8.8.8
+#- name: On-Web
+#  type: internet-access
+#  host:  8.8.8.8
 - name: Check GPU
   type: gpu-eval
   max_temp:  80
