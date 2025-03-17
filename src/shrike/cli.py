@@ -9,16 +9,15 @@ def diagnose(config) -> None:
 
     Configuration._yaml_file = config
     configuration = Configuration()
-    click.echo(f"Hello world: {configuration.name}")
+    click.echo(f"Loading configuration: {configuration.name}")
 
     results = asyncio.run(run_evals(configuration.evals))
 
-    #click.secho('Hello World!', fg='green')
-    #click.secho('Some more text', bg='blue', fg='white')
-    #click.secho('ATTENTION', blink=True, bold=True)
-
     for result in results:
-        click.echo(f"{result}")
+        if isinstance(result, Exception):
+            print(f"Unexpected exception: {result}")
+        else:
+            click.echo(f"{result}")
         
 
 async def run_evals(evals):
