@@ -15,6 +15,6 @@ class GPUTemperatureEval(BaseEval):
     async def eval(self)->Evaluation:
         eval:Evaluation = super().eval()
         gpu_info : NvidiaSMIOutput = await NvidiaSMICommand().run()
-        eval.passed = len([gpu for gpu in gpu_info.gpus if gpu.temp >= self.max_temp or gpu.memory_used >= self.max_used_memory ]) == 0
+        eval.passed = len([gpu for gpu in gpu_info.gpus if gpu.temp >= self.max_temp ]) == 0
         return eval
 
