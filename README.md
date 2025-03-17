@@ -13,15 +13,20 @@ Ensure allocated nodes are vetted before executing a distributed workload throug
 The sanity check should be embedded into your HPC `sbatch` script. It helps differentiate between healthy nodes and those that should be excluded.
 
 ```bash
-# Run sanity check
+# Run nodes vetting
 srun python -m shrike diagnose ../templates/simple-config.yaml >> sanity-results.txt
 
 # Extract node lists
 grep '^Cordon:' sanity-results.txt | awk '{print $2}' > cordoned-nodes.txt
 grep '^Vetted:' sanity-results.txt | awk '{print $2}' > vetted-nodes.txt
 
-# Run workload only on vetted (healthy) nodes
-srun -N $(wc -l < vetted-nodes.txt) --exclude=./cordoned-nodes.txt hostname
+#Run on healthy nodes only
+if [ $(wc -l < vetted-nodes.txt) -ge $REQUIRED_NODES ]; then
+    srun -N $REQUIRED_NODES --exclude=./cordoned-nodes.txt $MAIN_JOB_COMMAND
+else
+    echo "Job canceled!"
+    echo "Reason: too few vetted nodes."
+fi
 ```
 
 ## Example: Running a Job
