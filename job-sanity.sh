@@ -22,6 +22,6 @@ source .venv-shrike/bin/activate
 python -m pip --no-cache-dir install --upgrade pip
 pip install --no-cache-dir -r ./requirements.txt
 cd src
-touch cordoned-nodes.txt
+touch /users/palmee/shrike-deploy/cordoned-nodes.txt
 
-srun python -m shrike diagnose ../templates/simple-config.yaml >> cordoned-nodes.txt
+srun python -m shrike diagnose ../templates/simple-config.yaml >> /users/palmee/shrike-deploy/cordoned-nodes.txt
