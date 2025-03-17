@@ -31,4 +31,4 @@ class NvidiaSMICommand:
       stdout, stderr = await proc.communicate()
       await proc.wait()
       return_code = proc.returncode
-      return return_code, stdout, stderr
+      return return_code, stdout[0].decode("utf-8"), stderr[0].decode("utf-8")
