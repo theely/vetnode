@@ -24,7 +24,8 @@ class NvidiaSMICommand:
       return NvidiaSMIOutput(**{"gpus":gpus_info})
     
    async def _execute(self): 
-      proc = await asyncio.create_subprocess_exec('nvidia-smi', '-q -a',
+      cmd = ['nvidia-smi', '-q', '-a']
+      proc = await asyncio.create_subprocess_exec(*cmd,
          stdout=asyncio.subprocess.PIPE,
          stderr=asyncio.subprocess.PIPE)
 
