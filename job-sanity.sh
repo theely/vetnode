@@ -24,4 +24,4 @@ pip install --no-cache-dir -r ./requirements.txt
 cd src
 touch cordoned-nodes.txt
 
-srun -m shrike diagnose ../templates/simple-config.yaml >> cordoned-nodes.txt
+srun python -m shrike diagnose ../templates/simple-config.yaml >> cordoned-nodes.txt
