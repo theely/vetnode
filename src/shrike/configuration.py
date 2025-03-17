@@ -9,13 +9,13 @@ from pydantic_settings import (
 
 
 from shrike.evaluations.ping import PingEval
-from shrike.evaluations.gpu_temperature import GPUTemperatureEval
+from shrike.evaluations.gpu_eval import GPUEval
 from shrike.evaluations.internet_access import InternetAccessEval
 
 
 
 Evals = Annotated[
-    Union[PingEval, GPUTemperatureEval, InternetAccessEval],
+    Union[PingEval, GPUEval, InternetAccessEval],
     Field(discriminator="type")
 ]
 
