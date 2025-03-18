@@ -37,7 +37,7 @@ pip install --no-cache-dir -r ./requirements.txt
 cd src
 touch sanity-results.txt
 
-# Run nodes vettin
+# Run nodes vetting
 srun python -m shrike diagnose ../templates/simple-config.yaml >> sanity-results.txt
 
 # Extract node lists
@@ -48,6 +48,6 @@ grep '^Vetted:' sanity-results.txt | awk '{print $2}' > vetted-nodes.txt
 if [ $(wc -l < vetted-nodes.txt) -ge $REQUIRED_NODES ]; then
     srun -N $REQUIRED_NODES --exclude=./cordoned-nodes.txt $MAIN_JOB_COMMAND
 else
-    echo "Job canceled!"
+    echo "Job aborted!"
     echo "Reason: too few vetted nodes."
 fi
