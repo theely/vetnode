@@ -22,6 +22,7 @@ class CUDAEval(BaseEval):
 
         print("Init driver")
         (err,) = cuda.cuInit(0)
+        print(err)
         self.checkCudaErrors(err)
 
         #self.checkCudaErrors(driver.cuDeviceGetCount())

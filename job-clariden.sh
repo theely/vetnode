@@ -39,7 +39,7 @@ rm /users/palmee/shrike-deploy/sanity-results.txt
 touch /users/palmee/shrike-deploy/sanity-results.txt
 
 # Run nodes vetting
-srun python -m shrike diagnose ../templates/simple-config.yaml >> /users/palmee/shrike-deploy/sanity-results.txt
+srun python -m shrike diagnose ../templates/simple-config.yaml &>> /users/palmee/shrike-deploy/sanity-results.txt
 
 # Extract node lists
 grep '^Cordon:' /users/palmee/shrike-deploy/sanity-results.txt | awk '{print $2}' > cordoned-nodes.txt
