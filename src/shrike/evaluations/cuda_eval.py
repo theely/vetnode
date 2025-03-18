@@ -43,7 +43,7 @@ class CUDAEval(BaseEval):
 
         return eval
 
-    def checkCudaErrors(err):
+    def checkCudaErrors(self, err):
         if err != cuda.CUresult.CUDA_SUCCESS:
             raise RuntimeError("CUDA error code={}({})".format(err, _cudaGetErrorEnum(err)))
         
