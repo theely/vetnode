@@ -3,7 +3,8 @@ from typing import Literal
 from shrike.evaluations.base_eval import BaseEval
 from shrike.evaluations.models import Evaluation
 
-import cuda.cuda as cuda
+from cuda import cuda, nvrtc
+
 
 
 def _cudaGetErrorEnum(error):
@@ -12,6 +13,17 @@ def _cudaGetErrorEnum(error):
         return name if err == cuda.CUresult.CUDA_SUCCESS else "<unknown>"
     else:
         raise RuntimeError('Unknown error type: {}'.format(error))
+    
+saxpy = """\
+extern "C" __global__
+void saxpy(float a, float *x, float *y, float *out, size_t n)
+{
+ size_t tid = blockIdx.x * blockDim.x + threadIdx.x;
+ if (tid < n) {
+   out[tid] = a * x[tid] + y[tid];
+ }
+}
+"""
 
 class CUDAEval(BaseEval):
     name:str
@@ -20,27 +32,39 @@ class CUDAEval(BaseEval):
     async def eval(self)->Evaluation:
         eval:Evaluation = super().eval()
 
-        print("Init driver")
+
         (err,) = cuda.cuInit(0)
-        print(err)
         self.checkCudaErrors(err)
 
-        #self.checkCudaErrors(driver.cuDeviceGetCount())
+        err, ndevice = cuda.cuDeviceGetCount()
+        self.checkCudaErrors(err)
 
-
-        print("Get device")
         err, cuDevice = cuda.cuDeviceGet(0)
         self.checkCudaErrors(err)
 
-        # Derive target architecture for device 0
-        print("get version")    
+
         err, major = cuda.cuDeviceGetAttribute(cuda.CUdevice_attribute.CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MAJOR, cuDevice)
         self.checkCudaErrors(err)
         err, minor = cuda.cuDeviceGetAttribute(cuda.CUdevice_attribute.CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MINOR, cuDevice)
         self.checkCudaErrors(err)
-        print(f'--gpu-architecture=compute_{major}{minor}', 'ascii')
 
+        arch_arg = bytes(f'--gpu-architecture=compute_{major}{minor}', 'ascii')
 
+        err, prog =nvrtc.nvrtcCreateProgram(str.encode(saxpy), b"saxpy.cu", 0, [], [])
+        self.checkCudaErrors(err)
+
+        opts = [b"--fmad=false", arch_arg]
+        (err, )=nvrtc.nvrtcCompileProgram(prog, 2, opts)
+        self.checkCudaErrors(err)
+
+        # Get PTX from compilation
+        err, ptxSize = nvrtc.nvrtcGetPTXSize(prog)
+        self.checkCudaErrors(err)
+        ptx = b" " * ptxSize
+        (err, )= nvrtc.nvrtcGetPTX(prog, ptx)
+        self.checkCudaErrors(err)
+
+        eval.passed = True
         return eval
 
     def checkCudaErrors(self, err):
