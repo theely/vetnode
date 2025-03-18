@@ -38,6 +38,9 @@ cd src
 rm /users/palmee/shrike-deploy/sanity-results.txt
 touch /users/palmee/shrike-deploy/sanity-results.txt
 
+#Add CUDA
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/nvidia/hpc_sdk/Linux_aarch64/24.3/cuda/12.3/lib64/
+
 # Run nodes vetting
 srun python -m shrike diagnose ../templates/simple-config.yaml &>> /users/palmee/shrike-deploy/sanity-results.txt
 
