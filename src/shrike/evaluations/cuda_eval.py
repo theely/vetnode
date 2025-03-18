@@ -4,7 +4,7 @@ from shrike.evaluations.base_eval import BaseEval
 from shrike.evaluations.models import Evaluation
 
 from cuda import cuda, nvrtc
-
+import numpy as np
 
 
 def _cudaGetErrorEnum(error):
@@ -63,6 +63,74 @@ class CUDAEval(BaseEval):
         ptx = b" " * ptxSize
         (err, )= nvrtc.nvrtcGetPTX(prog, ptx)
         self.checkCudaErrors(err)
+
+
+        # Create context
+        err, context = cuda.cuCtxCreate(0, cuDevice)
+
+                # Load PTX as module data and retrieve function
+        ptx = np.char.array(ptx)
+        # Note: Incompatible --gpu-architecture would be detected here
+        err,module = cuda.cuModuleLoadData(ptx.ctypes.data)
+        self.checkCudaErrors(err)
+        err, kernel = cuda.cuModuleGetFunction(module, b"saxpy")
+        self.checkCudaErrors(err)
+
+        NUM_THREADS = 512  # Threads per block
+        NUM_BLOCKS = 32768  # Blocks per grid
+
+        a = np.array([2.0], dtype=np.float32)
+        n = np.array(NUM_THREADS * NUM_BLOCKS, dtype=np.uint32)
+        bufferSize = n * a.itemsize
+
+        hX = np.random.rand(n).astype(dtype=np.float32)
+        hY = np.random.rand(n).astype(dtype=np.float32)
+        hOut = np.zeros(n).astype(dtype=np.float32)
+
+        err, dXclass = cuda.cuMemAlloc(bufferSize)
+        err, dYclass = cuda.cuMemAlloc(bufferSize)
+        err, dOutclass = cuda.cuMemAlloc(bufferSize)
+
+        err, stream = cuda.cuStreamCreate(0)
+
+        cuda.cuMemcpyHtoDAsync(dXclass, hX.ctypes.data, bufferSize, stream)
+        cuda.cuMemcpyHtoDAsync(dYclass, hY.ctypes.data, bufferSize, stream)
+
+        dX = np.array([int(dXclass)], dtype=np.uint64)
+        dY = np.array([int(dYclass)], dtype=np.uint64)
+        dOut = np.array([int(dOutclass)], dtype=np.uint64)
+
+        args = [a, dX, dY, dOut, n]
+        args = np.array([arg.ctypes.data for arg in args], dtype=np.uint64)
+
+        (err,) = cuda.cuLaunchKernel(
+            kernel,
+            NUM_BLOCKS,  # grid x dim
+            1,  # grid y dim
+            1,  # grid z dim
+            NUM_THREADS,  # block x dim
+            1,  # block y dim
+            1,  # block z dim
+            0,  # dynamic shared memory
+            stream,  # stream
+            args.ctypes.data,  # kernel arguments
+            0,  # extra (ignore)
+        )
+        self.checkCudaErrors(err)
+
+        cuda.cuMemcpyDtoHAsync(hOut.ctypes.data, dOutclass, bufferSize, stream)
+        cuda.cuStreamSynchronize(stream)
+
+        hZ = a * hX + hY
+        if not np.allclose(hOut, hZ):
+            raise ValueError("Error outside tolerance for host-device vectors")
+        
+        cuda.cuStreamDestroy(stream)
+        cuda.cuMemFree(dXclass)
+        cuda.cuMemFree(dYclass)
+        cuda.cuMemFree(dOutclass)
+        cuda.cuModuleUnload(module)
+        cuda.cuCtxDestroy(context)
 
         eval.passed = True
         return eval

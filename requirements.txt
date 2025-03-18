@@ -4,3 +4,4 @@ pydantic-settings >= 2.2.0
 pydantic-settings[yaml]
 textfsm
 cuda-python
+numpy
