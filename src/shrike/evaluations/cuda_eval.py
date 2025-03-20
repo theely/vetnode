@@ -1,4 +1,4 @@
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ProcessPoolExecutor
 import asyncio
 from typing import Literal
 
@@ -31,7 +31,7 @@ class CUDAEval(BaseEval):
     type: Literal["cuda-eval"]
 
     async def check(self)->bool:
-        with ThreadPoolExecutor() as executor:
+        with ProcessPoolExecutor() as executor:
             return await asyncio.get_event_loop().run_in_executor(executor, self._check)
 
 
