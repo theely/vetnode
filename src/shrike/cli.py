@@ -51,7 +51,7 @@ async def run_evals(evals):
 
 async def run_setups(evals: List[BaseEval]):
     click.echo("----------------------------")
-    click.echo("** Tests initilization!   **")
+    click.echo("** Tests initialization!   **")
     click.echo("----------------------------")
     for eval in evals:
         try:
