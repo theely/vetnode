@@ -19,7 +19,7 @@ def diagnose(config) -> None:
     click.echo("----------------------------")
     for result in results:
         if isinstance(result, Exception):
-            click.secho(f"Node: {hostname} \t unexpected exception: {result}", fg='read')
+            click.secho(f"Node: {hostname} \t unexpected exception: {result}", fg='red')
             traceback.print_tb(result.__traceback__)
             healthy=False
         else:
