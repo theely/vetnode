@@ -4,7 +4,8 @@ from pydantic import BaseModel
 import asyncio
 import time
 from shrike.evaluations.models import Evaluation
-
+import subprocess
+import sys
 
 TIMEOUT = 5000
 
@@ -35,3 +36,6 @@ class BaseEval(BaseModel):
             end_time = time.time()
             result.elapsedtime = end_time-start_time
         return result
+    
+    def install(self, package):
+        subprocess.check_call([sys.executable, "-m", "pip", "install", package])

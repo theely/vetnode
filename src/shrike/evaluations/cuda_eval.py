@@ -1,7 +1,8 @@
 from concurrent.futures import ThreadPoolExecutor
 import asyncio
 from typing import Literal
-import pip
+
+
 from shrike.evaluations.base_eval import BaseEval
 
 from cuda import cuda, nvrtc
@@ -31,8 +32,8 @@ class CUDAEval(BaseEval):
     type: Literal["cuda-eval"]
 
     def setup(self)->bool:
-         pip.main(['install', 'cuda-python'])
-         pip.main(['install', 'numpy'])
+         self.install('cuda-python')
+         self.install('numpy')
 
     async def check(self,executor)->bool:
         return await asyncio.get_event_loop().run_in_executor(executor, self._check)
