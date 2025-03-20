@@ -47,5 +47,5 @@ async def run_evals(evals):
 
 
 async def run_setups(evals):
-    tasks = [eval.setup() for eval in evals]
-    return await asyncio.gather(*tasks, return_exceptions=True)
+    for eval in evals:
+        eval.setup()
