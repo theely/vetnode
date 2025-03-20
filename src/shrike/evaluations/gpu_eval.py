@@ -12,7 +12,7 @@ class GPUEval(BaseEval):
     max_temp: int
     max_used_memory: float
 
-    async def eval(self)->Evaluation:
+    async def check(self)->Evaluation:
         eval:Evaluation = super().eval()
         gpu_info : NvidiaSMIOutput = await NvidiaSMICommand().run()
         eval.passed = len([gpu for gpu in gpu_info.gpus if gpu.temp >= self.max_temp or (gpu.memory_used / gpu.memory_total) > self.max_used_memory ]) == 0

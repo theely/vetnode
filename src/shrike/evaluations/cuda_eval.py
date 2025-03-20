@@ -29,7 +29,7 @@ class CUDAEval(BaseEval):
     name:str
     type: Literal["cuda-eval"]
 
-    async def eval(self)->Evaluation:
+    async def check(self)->Evaluation:
         eval:Evaluation = super().eval()
 
 
@@ -68,7 +68,7 @@ class CUDAEval(BaseEval):
         # Create context
         err, context = cuda.cuCtxCreate(0, cuDevice)
 
-                # Load PTX as module data and retrieve function
+        # Load PTX as module data and retrieve function
         ptx = np.char.array(ptx)
         # Note: Incompatible --gpu-architecture would be detected here
         err,module = cuda.cuModuleLoadData(ptx.ctypes.data)

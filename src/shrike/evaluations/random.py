@@ -9,7 +9,7 @@ class RandomEval(BaseEval):
     name:str
     type: Literal["random"]
 
-    async def eval(self)->Evaluation:
+    async def check(self)->Evaluation:
         eval:Evaluation = super().eval()
         eval.passed = random.choice([True, False])
         return eval

@@ -9,7 +9,7 @@ class PingEval(BaseEval):
     name:str
     type: Literal["ping-nodes"]
 
-    async def eval(self)->Evaluation:
+    async def check(self)->Evaluation:
         eval:Evaluation = super().eval()
         eval.passed = True
         return eval

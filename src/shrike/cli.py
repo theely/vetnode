@@ -14,15 +14,18 @@ def diagnose(config) -> None:
 
     results = asyncio.run(run_evals(configuration.evals))
     healthy:bool=True
+    click.echo("----------------------------")
+    click.echo("Results:")
+    click.echo("----------------------------")
     for result in results:
         if isinstance(result, Exception):
-            print(f"Unexpected exception: {result} on node:{hostname}")
+            click.secho(f"Node: {hostname} \t unexpected exception: {result}", fg='read')
             traceback.print_tb(result.__traceback__)
             healthy=False
         else:
             if not result.passed:
                 healthy=False
-            click.echo(f"Check result: {result} on node:{hostname}")
+            click.echo(f"Node: {hostname} \t result:{result}")
 
     if healthy:
         click.echo(f"Vetted: {hostname}")

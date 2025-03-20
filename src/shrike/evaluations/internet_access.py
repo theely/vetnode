@@ -12,7 +12,7 @@ class InternetAccessEval(BaseEval):
     port:Optional[int]=53
     timeout:Optional[int]=3
 
-    async def eval(self)->Evaluation:
+    async def check(self)->Evaluation:
         eval:Evaluation = super().eval()
         try:
             socket.setdefaulttimeout(self.timeout)
