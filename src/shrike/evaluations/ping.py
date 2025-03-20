@@ -8,5 +8,5 @@ class PingEval(BaseEval):
     name:str
     type: Literal["ping-nodes"]
 
-    async def check(self)->bool:
+    async def check(self,executor)->bool:
         return True

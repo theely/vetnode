@@ -1,4 +1,4 @@
-
+from concurrent.futures import ThreadPoolExecutor
 from abc import abstractmethod
 from pydantic import BaseModel
 import asyncio
@@ -7,6 +7,9 @@ from shrike.evaluations.models import Evaluation
 
 
 TIMEOUT = 5000
+
+_POOL = ThreadPoolExecutor(max_workers=10)
+
 
 class BaseEval(BaseModel):
     name:str
@@ -20,7 +23,7 @@ class BaseEval(BaseModel):
         pass     
     
     @abstractmethod
-    async def check(self)->bool:
+    async def check(self, executor:ThreadPoolExecutor)->bool:
         pass
     
     async def eval(self)->Evaluation:
@@ -28,7 +31,7 @@ class BaseEval(BaseModel):
         
         async with asyncio.timeout(TIMEOUT):
             start_time = time.time()
-            result.passed = await self.check()
+            result.passed = await self.check(_POOL)
             end_time = time.time()
             result.elapsedtime = end_time-start_time
         return result
