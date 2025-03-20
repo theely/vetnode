@@ -32,14 +32,11 @@ class CUDAEval(BaseEval):
     type: Literal["cuda-eval"]
 
     def verify(self)->bool:
-         try:
-            libc = CDLL("libnvrtc.so.12")  # On Linux
-            return libc is not None
-         except Exception:
-             return False
+        libc = CDLL("libnvrtc.so.12")  # On Linux
+        return libc is not None
     
     def setup(self)->bool:
-         self.install('cuda-python')
+         self.install('curda-python')
          self.install('numpy')
 
     async def check(self,executor)->bool:

@@ -1,8 +1,10 @@
 import asyncio
+from typing import List
 import click
 import traceback
 import socket  
 from shrike.configuration import Configuration
+from shrike.evaluations.models import Evaluation
 
 @click.command()
 @click.argument("config", type=click.Path())
@@ -46,7 +48,13 @@ async def run_evals(evals):
     return await asyncio.gather(*tasks, return_exceptions=True)
 
 
-async def run_setups(evals):
+async def run_setups(evals: List[Evaluation]):
+    click.echo("----------------------------")
+    click.echo("Test initilization:")
+    click.echo("----------------------------")
     for eval in evals:
-        if eval.verify():
-            eval.setup()
+        try:
+            if eval.verify():
+                eval.setup()
+        except Exception as ex:
+            click.secho(f"Test {eval.test_name} not validated, error: {ex}", fg='red')
