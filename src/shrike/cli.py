@@ -32,7 +32,20 @@ def diagnose(config) -> None:
     else:
         click.echo(f"Cordon: {hostname}")
 
+@click.command()
+@click.argument("config", type=click.Path())
+def setup(config) -> None:
+    Configuration._yaml_file = config
+    configuration = Configuration()
+    
+    asyncio.run(run_setups(configuration.evals))
+
 
 async def run_evals(evals):
     tasks = [eval.eval() for eval in evals]
+    return await asyncio.gather(*tasks, return_exceptions=True)
+
+
+async def run_setups(evals):
+    tasks = [eval.setup() for eval in evals]
     return await asyncio.gather(*tasks, return_exceptions=True)
