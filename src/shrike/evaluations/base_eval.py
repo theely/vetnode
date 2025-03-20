@@ -16,7 +16,6 @@ class BaseEval(BaseModel):
     name:str
     type:str
 
-
     def verify(self)->bool:
         return True
 

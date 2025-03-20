@@ -4,6 +4,7 @@ import click
 import traceback
 import socket  
 from shrike.configuration import Configuration
+from shrike.evaluations.base_eval import BaseEval
 from shrike.evaluations.models import Evaluation
 
 @click.command()
@@ -48,7 +49,7 @@ async def run_evals(evals):
     return await asyncio.gather(*tasks, return_exceptions=True)
 
 
-async def run_setups(evals: List[Evaluation]):
+async def run_setups(evals: List[BaseEval]):
     click.echo("----------------------------")
     click.echo("Test initilization:")
     click.echo("----------------------------")
@@ -57,4 +58,4 @@ async def run_setups(evals: List[Evaluation]):
             if eval.verify():
                 eval.setup()
         except Exception as ex:
-            click.secho(f"Test {eval.test_name} not validated, error: {ex}", fg='red')
+            click.secho(f"Test {eval.name} not validated, error: {ex}", fg='red')
