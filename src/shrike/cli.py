@@ -57,5 +57,6 @@ async def run_setups(evals: List[BaseEval]):
         try:
             if eval.verify():
                 eval.setup()
+                click.secho(f"Initialized: {eval.name}", fg='green')
         except Exception as ex:
-            click.secho(f"Test {eval.name} not validated, error: {ex}", fg='red')
+            click.secho(f"Skipped: {eval.name} (error: {ex})", fg='red')
