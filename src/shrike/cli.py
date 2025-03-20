@@ -48,4 +48,5 @@ async def run_evals(evals):
 
 async def run_setups(evals):
     for eval in evals:
-        eval.setup()
+        if eval.verify():
+            eval.setup()

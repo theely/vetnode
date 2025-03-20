@@ -17,8 +17,8 @@ class BaseEval(BaseModel):
     type:str
 
 
-    def validate(self)->bool:
-        pass
+    def verify(self)->bool:
+        return True
 
     def setup(self)->bool:
         pass     

@@ -4,7 +4,7 @@ from typing import Literal
 
 
 from shrike.evaluations.base_eval import BaseEval
-
+from ctypes import CDLL
 from cuda import cuda, nvrtc
 import numpy as np
 
@@ -31,6 +31,13 @@ class CUDAEval(BaseEval):
     name:str
     type: Literal["cuda-eval"]
 
+    def verify(self)->bool:
+         try:
+            libc = CDLL("libnvrtc.so.12")  # On Linux
+            return libc is not None
+         except Exception:
+             return False
+    
     def setup(self)->bool:
          self.install('cuda-python')
          self.install('numpy')
