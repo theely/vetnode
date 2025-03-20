@@ -25,7 +25,7 @@ def diagnose(config) -> None:
         else:
             if not result.passed:
                 healthy=False
-            click.echo(f"Node: {hostname} \t result:{result}")
+            click.secho(f"Node: {hostname} \t result:{result}", fg='green' if result.passed else 'red')
 
     if healthy:
         click.echo(f"Vetted: {hostname}")
