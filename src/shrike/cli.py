@@ -45,13 +45,19 @@ def setup(config) -> None:
 
 
 async def run_evals(evals):
-    tasks = [eval.eval() for eval in evals]
+    tasks = []
+    for eval in evals:
+        try:
+            if eval.verify():
+                tasks.append(eval.eval())
+        except Exception as ex:
+            click.secho(f"Skipped: {eval.name} (error: {ex})", fg='red')
     return await asyncio.gather(*tasks, return_exceptions=True)
 
 
 async def run_setups(evals: List[BaseEval]):
     click.echo("----------------------------")
-    click.echo("** Tests initialization!   **")
+    click.echo("** Tests initialization!  **")
     click.echo("----------------------------")
     for eval in evals:
         try:
