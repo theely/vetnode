@@ -36,7 +36,7 @@ class CUDAEval(BaseEval):
         return libc is not None
     
     def setup(self)->bool:
-         self.install('curda-python')
+         self.install('cuda-python')
          self.install('numpy')
 
     async def check(self,executor)->bool:
