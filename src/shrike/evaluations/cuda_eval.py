@@ -1,3 +1,6 @@
+from asyncio import futures
+import asyncio
+import functools
 from typing import Literal
 
 from shrike.evaluations.base_eval import BaseEval
@@ -29,6 +32,11 @@ class CUDAEval(BaseEval):
     type: Literal["cuda-eval"]
 
     async def check(self)->bool:
+        _POOL = futures.ThreadPoolExecutor(max_workers=1)
+        return await asyncio.get_event_loop().run_in_executor(_POOL, functools.partial(self._check))
+
+
+    def _check(self)->bool:
 
         (err,) = cuda.cuInit(0)
         self.checkCudaErrors(err)
