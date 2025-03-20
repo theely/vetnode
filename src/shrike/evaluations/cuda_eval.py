@@ -1,7 +1,6 @@
 from typing import Literal
 
 from shrike.evaluations.base_eval import BaseEval
-from shrike.evaluations.models import Evaluation
 
 from cuda import cuda, nvrtc
 import numpy as np
@@ -29,9 +28,7 @@ class CUDAEval(BaseEval):
     name:str
     type: Literal["cuda-eval"]
 
-    async def check(self)->Evaluation:
-        eval:Evaluation = super().eval()
-
+    async def check(self)->bool:
 
         (err,) = cuda.cuInit(0)
         self.checkCudaErrors(err)
@@ -132,8 +129,7 @@ class CUDAEval(BaseEval):
         cuda.cuModuleUnload(module)
         cuda.cuCtxDestroy(context)
 
-        eval.passed = True
-        return eval
+        return True
 
     def checkCudaErrors(self, err):
         if err != cuda.CUresult.CUDA_SUCCESS:
