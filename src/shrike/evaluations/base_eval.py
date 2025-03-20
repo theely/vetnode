@@ -24,10 +24,10 @@ class BaseEval(BaseModel):
         pass
     
     async def eval(self)->Evaluation:
-        result:Evaluation = Evaluation(**{"test_name":self.name, "test_type": self.type, "passed":False})
+        result:Evaluation = Evaluation(**{"test_name":self.name, "test_type": self.type, "elapsedtime":0, "passed":False})
         start_time = time.time()
         async with asyncio.timeout(TIMEOUT):
             result.passed = self.check()
         end_time = time.time()
-        result.elapsetime = start_time-end_time
+        result.elapsedtime = start_time-end_time
         return result
