@@ -29,5 +29,5 @@ class BaseEval(BaseModel):
         async with asyncio.timeout(TIMEOUT):
             result.passed = await self.check()
         end_time = time.time()
-        result.elapsedtime = start_time-end_time
+        result.elapsedtime = end_time-start_time
         return result
