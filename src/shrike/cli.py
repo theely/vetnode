@@ -18,7 +18,7 @@ def diagnose(config) -> None:
     results = asyncio.run(run_evals(configuration.evals))
     healthy:bool=True
     click.echo("----------------------------")
-    click.echo("Results:")
+    click.echo("** Results:               **")
     click.echo("----------------------------")
     for result in results:
         if isinstance(result, Exception):
@@ -51,7 +51,7 @@ async def run_evals(evals):
 
 async def run_setups(evals: List[BaseEval]):
     click.echo("----------------------------")
-    click.echo("Test initilization:")
+    click.echo("** Tests initilization!   **")
     click.echo("----------------------------")
     for eval in evals:
         try:
