@@ -27,34 +27,36 @@ echo "╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝╚�
 
 
 # Set-up environment and node vetting cli
-rm -rf shrike-deploy
-git clone https://github.com/theely/shrike.git shrike-deploy
-cd shrike-deploy
+WORK_DIR="shrike-$(uuidgen)"
+mkdir $WORK_DIR
+#
+git clone https://github.com/theely/shrike.git $WORK_DIR
+touch "./$WORK_DIR/sanity-results.txt"
+cd $WORK_DIR
 python3.11 -m venv .venv-shrike
 source .venv-shrike/bin/activate
 python -m pip --no-cache-dir install --upgrade pip
 pip install --no-cache-dir -r ./requirements.txt
 cd src
-rm /users/palmee/shrike-deploy/sanity-results.txt
-touch /users/palmee/shrike-deploy/sanity-results.txt
+
 
 #Add CUDA
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/nvidia/hpc_sdk/Linux_aarch64/24.3/cuda/12.3/lib64/
 
 #Setup node vetting on main node
-python -m shrike setup ../templates/simple-config.yaml &>> /users/palmee/shrike-deploy/sanity-results.txt
+python -m shrike setup ../examples/Slurm-job-with-vetting/simple-config.yaml &>> ../sanity-results.txt
 
 
 # Run nodes vetting
-srun python -m shrike diagnose ../templates/simple-config.yaml &>> /users/palmee/shrike-deploy/sanity-results.txt
+srun python -m shrike diagnose .../examples/Slurm-job-with-vetting/simple-config.yaml &>> ../sanity-results.txt
 
 # Extract node lists
-grep '^Cordon:' /users/palmee/shrike-deploy/sanity-results.txt | awk '{print $2}' > cordoned-nodes.txt
-grep '^Vetted:' /users/palmee/shrike-deploy/sanity-results.txt | awk '{print $2}' > vetted-nodes.txt
+grep '^Cordon:' ../sanity-results.txt | awk '{print $2}' > ../cordoned-nodes.txt
+grep '^Vetted:' ../sanity-results.txt | awk '{print $2}' > ../vetted-nodes.txt
 
 #Run on healthy nodes only
-if [ $(wc -l < vetted-nodes.txt) -ge $REQUIRED_NODES ]; then
-    srun -N $REQUIRED_NODES --exclude=./cordoned-nodes.txt $MAIN_JOB_COMMAND
+if [ $(wc -l < ../vetted-nodes.txt) -ge $REQUIRED_NODES ]; then
+    srun -N $REQUIRED_NODES --exclude=../cordoned-nodes.txt $MAIN_JOB_COMMAND
 else
     echo "Job aborted!"
     echo "Reason: too few vetted nodes."

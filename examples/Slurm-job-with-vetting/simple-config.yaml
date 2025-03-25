@@ -1,7 +1,5 @@
 name: Simple Configuration
 evals:
-- name: Pinger
-  type: ping-nodes
 - name: CudaKernel
   type: cuda-eval
 - name: Check GPU
