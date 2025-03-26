@@ -1,13 +1,13 @@
 from typing import Literal
 
-from shrike.commands.nvidiasmi.models import NvidiaSMIOutput
-from shrike.commands.nvidiasmi.nvidia_smi_command import NvidiaSMICommand
-from shrike.evaluations.base_eval import BaseEval
+from vetnode.commands.nvidiasmi.models import NvidiaSMIOutput
+from vetnode.commands.nvidiasmi.nvidia_smi_command import NvidiaSMICommand
+from vetnode.evaluations.base_eval import BaseEval
 
 
 class GPUEval(BaseEval):
     name:str
-    type: Literal["shrike.evaluations.gpu_eval.GPUEval"]
+    type: Literal["vetnode.evaluations.gpu_eval.GPUEval"]
     max_temp: int
     max_used_memory: float
 

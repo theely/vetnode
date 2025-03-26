@@ -3,7 +3,7 @@ import asyncio
 from typing import Literal
 
 
-from shrike.evaluations.base_eval import BaseEval
+from vetnode.evaluations.base_eval import BaseEval
 from ctypes import CDLL
 from cuda import cuda, nvrtc
 import numpy as np
@@ -29,7 +29,7 @@ void saxpy(float a, float *x, float *y, float *out, size_t n)
 
 class CUDAEval(BaseEval):
     name:str
-    type: Literal["shrike.evaluations.cuda_eval.CUDAEval"]
+    type: Literal["vetnode.evaluations.cuda_eval.CUDAEval"]
     requirements: Literal[["cuda-python","numpy"]]
 
     def verify(self)->bool:

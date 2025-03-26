@@ -3,7 +3,7 @@ from importlib import resources as impresources
 
 import textfsm
 from tests import mocked_commands
-from src.shrike.commands import nvidiasmi
+from src.vetnode.commands import nvidiasmi
 import pytest
 
 def load_cmd_output(file: str):

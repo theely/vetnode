@@ -3,15 +3,15 @@ from typing import List
 import click
 import traceback
 import socket  
-from shrike.configuration import Configuration
-from shrike.evaluations.models import EvalConfiguration
+from vetnode.configuration import Configuration
+from vetnode.evaluations.models import EvalConfiguration
 
 import subprocess
 import sys
 from pydoc import locate
 
 @click.command()
-@click.argument("config", type=click.Path())
+@click.argument("config", type=click.Path(exists=True))
 def diagnose(config) -> None:
     hostname:str = socket.gethostname()
     Configuration._yaml_file = config
@@ -39,7 +39,7 @@ def diagnose(config) -> None:
         click.echo(f"Cordon: {hostname}")
 
 @click.command()
-@click.argument("config", type=click.Path())
+@click.argument("config", type=click.Path(exists=True))
 def setup(config) -> None:
     Configuration._yaml_file = config
     configuration = Configuration()

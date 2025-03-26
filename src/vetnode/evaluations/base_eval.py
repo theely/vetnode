@@ -2,7 +2,7 @@ from concurrent.futures import ThreadPoolExecutor
 from abc import abstractmethod
 import asyncio
 import time
-from shrike.evaluations.models import EvalConfiguration, Evaluation
+from vetnode.evaluations.models import EvalConfiguration, Evaluation
 
 
 

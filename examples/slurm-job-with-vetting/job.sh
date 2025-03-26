@@ -27,36 +27,34 @@ echo "╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝╚�
 
 
 # Set-up environment and node vetting cli
-WORK_DIR="shrike-$SLURM_JOB_ID"
+WORK_DIR="vetnode-$SLURM_JOB_ID"
 mkdir $WORK_DIR
-#
-git clone https://github.com/theely/shrike.git $WORK_DIR
-touch "./$WORK_DIR/sanity-results.txt"
 cd $WORK_DIR
-python3.11 -m venv .venv-shrike
-source .venv-shrike/bin/activate
-python -m pip --no-cache-dir install --upgrade pip
-pip install --no-cache-dir -r ./requirements.txt
-cd src
+
+touch "./results.txt"
+
+python3.11 -m venv .venv
+source .venv/bin/activate
+pip install --no-cache-dir vetnode
 
 
 #Add CUDA
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/nvidia/hpc_sdk/Linux_aarch64/24.3/cuda/12.3/lib64/
 
 #Setup node vetting on main node
-python -m shrike setup ../examples/slurm-job-with-vetting/simple-config.yaml &>> ../sanity-results.txt
+vetnode setup ../examples/slurm-job-with-vetting/simple-config.yaml &>> ./results.txt
 
 
 # Run nodes vetting
-srun python -m shrike diagnose ../examples/slurm-job-with-vetting/simple-config.yaml &>> ../sanity-results.txt
+srun vetnode diagnose ../examples/slurm-job-with-vetting/simple-config.yaml &>> ./results.txt
 
 # Extract node lists
-grep '^Cordon:' ../sanity-results.txt | awk '{print $2}' > ../cordoned-nodes.txt
-grep '^Vetted:' ../sanity-results.txt | awk '{print $2}' > ../vetted-nodes.txt
+grep '^Cordon:' ./results.txt | awk '{print $2}' > ./cordoned-nodes.txt
+grep '^Vetted:' ./results.txt | awk '{print $2}' > ./vetted-nodes.txt
 
 #Run on healthy nodes only
-if [ $(wc -l < ../vetted-nodes.txt) -ge $REQUIRED_NODES ]; then
-    srun -N $REQUIRED_NODES --exclude=../cordoned-nodes.txt $MAIN_JOB_COMMAND
+if [ $(wc -l < ./vetted-nodes.txt) -ge $REQUIRED_NODES ]; then
+    srun -N $REQUIRED_NODES --exclude=./cordoned-nodes.txt $MAIN_JOB_COMMAND
 else
     echo "Job aborted!"
     echo "Reason: too few vetted nodes."

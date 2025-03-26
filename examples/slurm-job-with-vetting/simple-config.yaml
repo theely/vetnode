@@ -1,13 +1,13 @@
 name: Simple Configuration
 evals:
 - name: CudaKernel
-  type: shrike.evaluations.cuda_eval.CUDAEval
+  type: vetnode.evaluations.cuda_eval.CUDAEval
   requirements:
     - cuda-python
     - numpy
 - name: Check GPU
-  type: shrike.evaluations.gpu_eval.GPUEval
+  type: vetnode.evaluations.gpu_eval.GPUEval
   max_temp:  80
   max_used_memory: 0.25
 - name: Random
-  type: shrike.evaluations.random.RandomEval
+  type: vetnode.evaluations.random.RandomEval

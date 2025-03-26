@@ -14,7 +14,7 @@ The sanity check should be embedded into your HPC `sbatch` script. It helps diff
 
 ```bash
 # Run nodes vetting
-srun python -m shrike diagnose ../templates/simple-config.yaml >> sanity-results.txt
+srun python -m vetnode diagnose ../templates/simple-config.yaml >> sanity-results.txt
 
 # Extract node lists
 grep '^Cordon:' sanity-results.txt | awk '{print $2}' > cordoned-nodes.txt
@@ -37,7 +37,7 @@ To run a demo job that outputs a list of vetted nodes, follow these steps:
 # SSH into your HPC cluster
 
 # Clone the repository
-git clone https://github.com/theely/shrike.git shrike
+git clone https://github.com/theely/shrike.git
 
 # Submit the job 
 sbatch --account=csstaff shrike/examples/slurm-job-with-vetting/job.sh 
@@ -69,7 +69,7 @@ pip install -r requirements.txt
 
 ```
 cd src
-python -m shrike diagnose ../templates/simple-config.yaml
+python -m vetnode diagnose ../templates/simple-config.yaml
 ```
 
 
@@ -79,4 +79,11 @@ From the FirecREST root folder run pytest to execute all unit tests.
 source .venv/bin/activate
 pip install -r ./requirements.txt -r ./requirements-testing.txt
 pytest
+```
+
+## Distribute
+
+```
+python3 -m build --wheel
+twine upload dist/*         
 ```

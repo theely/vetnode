@@ -9,7 +9,7 @@
             "type": "debugpy",
             "request": "launch",
             "cwd":"${workspaceFolder}/src",
-            "module": "shrike",
+            "module": "vetnode",
             "args" : ["diagnose", "../examples/slurm-job-with-vetting/simple-config.yaml"]
         },
         {
@@ -17,7 +17,7 @@
             "type": "debugpy",
             "request": "launch",
             "cwd":"${workspaceFolder}/src",
-            "module": "shrike",
+            "module": "vetnode",
             "args" : ["setup", "../examples/slurm-job-with-vetting/simple-config.yaml"]
         }
     ]

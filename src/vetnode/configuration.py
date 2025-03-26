@@ -7,7 +7,7 @@ from pydantic_settings import (
     YamlConfigSettingsSource,
 )
 
-from shrike.evaluations.models import EvalConfiguration
+from vetnode.evaluations.models import EvalConfiguration
 
 
 

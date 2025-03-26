@@ -1,18 +1,26 @@
 [project]
-name = "shrink"  #HealthyNodes #SmoothRun #NodeSelector #FitOnes, #Fitness #OnlyFit #ClusterTherapy
-version = "0.0.1"
+name = "VetNode"  #HealthyNodes #SmoothRun #NodeSelector #FitOnes, #Fitness #OnlyFit #NodeVetting #VettedRun
+version = "0.0.2"
 authors = [
-  { name="Example Author", email="author@example.com" },
+  { name="Elia Palme", email="elia.palme@cscs.ch" },
 ]
-description = "A small example package"
+description = "A node vetting cli for Distributed Workloads"
 readme = "README.md"
 requires-python = ">=3.8"
+dependencies = [
+    "click",
+    "pydantic",
+    "pydantic-settings >= 2.2.0",
+    "pydantic-settings[yaml]",
+    "textfsm",
+    "pip",
+]
 classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",
 ]
-license = "MIT"
-license-files = ["LICENSE.md"]
+license = "BSD-3-Clause"
+license-files = ["LICENSE"]
 
 [project.urls]
 Homepage = "https://github.com/theely/shrink"
@@ -21,3 +29,6 @@ Issues = "https://github.com/theely/shrink/issues"
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[project.scripts]
+vetnode = "vetnode.__main__:main"

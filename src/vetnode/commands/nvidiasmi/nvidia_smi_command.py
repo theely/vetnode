@@ -1,8 +1,8 @@
 import asyncio
 from importlib import resources as impresources
 import textfsm
-from shrike.commands import nvidiasmi
-from shrike.commands.nvidiasmi.models import NvidiaSMIOutput
+from vetnode.commands import nvidiasmi
+from vetnode.commands.nvidiasmi.models import NvidiaSMIOutput
 
 
 
