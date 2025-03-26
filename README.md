@@ -54,6 +54,8 @@ fi
 ```
 ### Quick Run
 
+The following is a Slurm job example you can download and run as a test.
+
 ```bash
 curl -o job.sh  https://raw.githubusercontent.com/theely/vetnode/refs/heads/main/examples/slurm-ml-vetting/job.sh
 sbatch --account=a-csstaff job.sh
