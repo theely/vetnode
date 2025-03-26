@@ -44,11 +44,11 @@ cd src
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/nvidia/hpc_sdk/Linux_aarch64/24.3/cuda/12.3/lib64/
 
 #Setup node vetting on main node
-python -m shrike setup ../examples/Slurm-job-with-vetting/simple-config.yaml &>> ../sanity-results.txt
+python -m shrike setup ../examples/slurm-job-with-vetting/simple-config.yaml &>> ../sanity-results.txt
 
 
 # Run nodes vetting
-srun python -m shrike diagnose .../examples/Slurm-job-with-vetting/simple-config.yaml &>> ../sanity-results.txt
+srun python -m shrike diagnose .../examples/slurm-job-with-vetting/simple-config.yaml &>> ../sanity-results.txt
 
 # Extract node lists
 grep '^Cordon:' ../sanity-results.txt | awk '{print $2}' > ../cordoned-nodes.txt
