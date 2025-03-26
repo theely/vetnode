@@ -4,8 +4,11 @@ import click
 import traceback
 import socket  
 from shrike.configuration import Configuration
-from shrike.evaluations.base_eval import BaseEval
-from shrike.evaluations.models import Evaluation
+from shrike.evaluations.models import EvalConfiguration
+
+import subprocess
+import sys
+from pydoc import locate
 
 @click.command()
 @click.argument("config", type=click.Path())
@@ -14,8 +17,8 @@ def diagnose(config) -> None:
     Configuration._yaml_file = config
     configuration = Configuration()
     click.echo(f"Running sanity checks: {configuration.name} on node:{hostname}")
-
-    results = asyncio.run(run_evals(configuration.evals))
+    evals = load_evals(configuration.evals)
+    results = asyncio.run(run_evals(evals))
     healthy:bool=True
     click.echo("----------------------------")
     click.echo("** Results:               **")
@@ -40,8 +43,10 @@ def diagnose(config) -> None:
 def setup(config) -> None:
     Configuration._yaml_file = config
     configuration = Configuration()
-    
-    asyncio.run(run_setups(configuration.evals))
+    click.echo("----------------------------")
+    click.echo("** Tests initialization!  **")
+    click.echo("----------------------------")
+    load_evals(configuration.evals, install=True)
 
 
 async def run_evals(evals):
@@ -55,14 +60,20 @@ async def run_evals(evals):
     return await asyncio.gather(*tasks, return_exceptions=True)
 
 
-async def run_setups(evals: List[BaseEval]):
-    click.echo("----------------------------")
-    click.echo("** Tests initialization!  **")
-    click.echo("----------------------------")
-    for eval in evals:
+def load_evals(eval_configs: List[EvalConfiguration], install:bool=False):
+    evals = []
+    for eval in eval_configs:
+        
+        #Load class dynamically
         try:
-            if eval.verify():
-                eval.setup()
-                click.secho(f"Initialized: {eval.name}", fg='green')
+            if install and eval.requirements:
+                load_requirements(eval.requirements)
+            eval_class = locate(eval.type)
+            evals.append(eval_class(**eval.model_dump()))
         except Exception as ex:
             click.secho(f"Skipped: {eval.name} (error: {ex})", fg='red')
+    return evals
+
+def load_requirements(requirements: List[str]):
+    for package in requirements:
+        subprocess.check_call([sys.executable, "-m", "pip", "install", package])

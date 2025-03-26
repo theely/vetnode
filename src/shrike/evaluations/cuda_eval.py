@@ -1,4 +1,4 @@
-from concurrent.futures import ThreadPoolExecutor
+
 import asyncio
 from typing import Literal
 
@@ -29,15 +29,12 @@ void saxpy(float a, float *x, float *y, float *out, size_t n)
 
 class CUDAEval(BaseEval):
     name:str
-    type: Literal["cuda-eval"]
+    type: Literal["shrike.evaluations.cuda_eval.CUDAEval"]
+    requirements: Literal[["cuda-python","numpy"]]
 
     def verify(self)->bool:
         libc = CDLL("libnvrtc.so.12")  # On Linux
         return libc is not None
-    
-    def setup(self)->bool:
-         self.install('cuda-python')
-         self.install('numpy')
 
     async def check(self,executor)->bool:
         return await asyncio.get_event_loop().run_in_executor(executor, self._check)

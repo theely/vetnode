@@ -1,26 +1,14 @@
 
-from typing import  Annotated, ClassVar, List, Tuple, Type, Union
+from typing import  Any, ClassVar, List, Tuple, Type, TypeVar, Union
 from click import Path
-from pydantic import Field
 from pydantic_settings import (
     BaseSettings,
     PydanticBaseSettingsSource,
     YamlConfigSettingsSource,
 )
 
+from shrike.evaluations.models import EvalConfiguration
 
-from shrike.evaluations.cuda_eval import CUDAEval
-from shrike.evaluations.ping import PingEval
-from shrike.evaluations.gpu_eval import GPUEval
-from shrike.evaluations.internet_access import InternetAccessEval
-from shrike.evaluations.random import RandomEval
-
-
-
-Evals = Annotated[
-    Union[PingEval, GPUEval, InternetAccessEval, RandomEval,CUDAEval],
-    Field(discriminator="type")
-]
 
 
 class Configuration(BaseSettings):
@@ -28,7 +16,7 @@ class Configuration(BaseSettings):
     _yaml_file: ClassVar[Path] = None
 
     name:str
-    evals:List[Evals]
+    evals:List[EvalConfiguration]
 
     def __init__(self, path=None, *args, **kwargs):
         if path:

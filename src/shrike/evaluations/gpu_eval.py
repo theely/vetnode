@@ -7,7 +7,7 @@ from shrike.evaluations.base_eval import BaseEval
 
 class GPUEval(BaseEval):
     name:str
-    type: Literal["gpu-eval"]
+    type: Literal["shrike.evaluations.gpu_eval.GPUEval"]
     max_temp: int
     max_used_memory: float
 

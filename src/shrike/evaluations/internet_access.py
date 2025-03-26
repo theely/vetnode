@@ -6,7 +6,7 @@ from shrike.evaluations.base_eval import BaseEval
 
 class InternetAccessEval(BaseEval):
     name:str
-    type: Literal["internet-access"]
+    type: Literal["shrike.evaluations.internet_access.InternetAccessEval"]
     host:str
     port:Optional[int]=53
     timeout:Optional[int]=3
