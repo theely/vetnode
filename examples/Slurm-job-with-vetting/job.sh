@@ -27,7 +27,7 @@ echo "╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝╚�
 
 
 # Set-up environment and node vetting cli
-WORK_DIR="shrike-$(uuidgen)"
+WORK_DIR="shrike-$SLURM_JOB_ID"
 mkdir $WORK_DIR
 #
 git clone https://github.com/theely/shrike.git $WORK_DIR
