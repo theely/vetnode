@@ -37,8 +37,8 @@ The following is a node vetting example for a ML (machine learning) workflow on 
 REQUIRED_NODES=4
 MAIN_JOB_COMMAND="python -m torch.distributed.torchrun --nproc_per_node=$(wc -l < vetted-nodes.txt) main.py"
 
-vetnode setup ../examples/slurm-job-with-vetting/config.yaml
-srun vetnode diagnose ../examples/slurm-job-with-vetting/config.yaml >> results.txt
+vetnode setup ../examples/slurm-ml-vetting/config.yaml
+srun vetnode diagnose ../examples/slurm-ml-vetting/config.yaml >> results.txt
 
 # Extract node lists
 grep '^Cordon:' results.txt | awk '{print $2}' > cordoned-nodes.txt
