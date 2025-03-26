@@ -1,6 +1,6 @@
 [project]
-name = "VetNode"  #HealthyNodes #SmoothRun #NodeSelector #FitOnes, #Fitness #OnlyFit #NodeVetting #VettedRun
-version = "0.0.2"
+name = "VetNode"
+version = "0.0.3"
 authors = [
   { name="Elia Palme", email="elia.palme@cscs.ch" },
 ]
