@@ -48,7 +48,7 @@ python -m shrike setup ../examples/slurm-job-with-vetting/simple-config.yaml &>>
 
 
 # Run nodes vetting
-srun python -m shrike diagnose .../examples/slurm-job-with-vetting/simple-config.yaml &>> ../sanity-results.txt
+srun python -m shrike diagnose ../examples/slurm-job-with-vetting/simple-config.yaml &>> ../sanity-results.txt
 
 # Extract node lists
 grep '^Cordon:' ../sanity-results.txt | awk '{print $2}' > ../cordoned-nodes.txt
