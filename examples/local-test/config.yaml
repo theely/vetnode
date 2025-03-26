@@ -1,0 +1,7 @@
+name: Simple Configuration
+evals:
+- name: Random
+  type: vetnode.evaluations.random.RandomEval
+- name: Internet Access
+  type: vetnode.evaluations.internet_access.InternetAccessEval
+  host: google.com

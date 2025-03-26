@@ -8,17 +8,41 @@ Ensure allocated nodes are vetted before executing a distributed workload throug
 - 🛠️ **Modular and configurable** 
 - 🚀 **Easy to extend**
 
-## Usage
-
-The sanity check should be embedded into your HPC `sbatch` script. It helps differentiate between healthy nodes and those that should be excluded.
+## Getting Started
 
 ```bash
-# Run nodes vetting
-srun python -m vetnode diagnose ../templates/simple-config.yaml >> sanity-results.txt
+# Install
+pip install vetnode
+
+# checks for dependencies and installs requirements
+vetnode setup ./examples/local-test/config.yaml
+
+# runs the vetting process
+vetnode diagnose ./examples/local-test/config.yaml
+```
+
+## Usage Example
+
+The vetnode cli is intended to be embedded into your HPC workflow. 
+The following is a node vetting example for a ML (machine learning) workflow on a Slurm HPC cluster.
+
+```bash
+
+#!/bin/bash
+
+#SBATCH --nodes=6
+#SBATCH --time=0-00:15:00
+#SBATCH --account=a-csstaff
+
+REQUIRED_NODES=4
+MAIN_JOB_COMMAND="python -m torch.distributed.torchrun --nproc_per_node=$(wc -l < vetted-nodes.txt) main.py"
+
+vetnode setup ../examples/slurm-job-with-vetting/config.yaml
+srun vetnode diagnose ../examples/slurm-job-with-vetting/config.yaml >> results.txt
 
 # Extract node lists
-grep '^Cordon:' sanity-results.txt | awk '{print $2}' > cordoned-nodes.txt
-grep '^Vetted:' sanity-results.txt | awk '{print $2}' > vetted-nodes.txt
+grep '^Cordon:' results.txt | awk '{print $2}' > cordoned-nodes.txt
+grep '^Vetted:' results.txt | awk '{print $2}' > vetted-nodes.txt
 
 #Run on healthy nodes only
 if [ $(wc -l < vetted-nodes.txt) -ge $REQUIRED_NODES ]; then
@@ -28,29 +52,18 @@ else
     echo "Reason: too few vetted nodes."
 fi
 ```
-
-## Example: Running a Job
-
-To run a demo job that outputs a list of vetted nodes, follow these steps:
+### Quick Run
 
 ```bash
-# SSH into your HPC cluster
+curl -o job.sh  https://raw.githubusercontent.com/theely/vetnode/refs/heads/main/examples/slurm-ml-vetting/job.sh
+sbatch --account=a-csstaff job.sh
 
-# Clone the repository
-git clone https://github.com/theely/shrike.git
-
-# Submit the job 
-sbatch --account=csstaff shrike/examples/slurm-job-with-vetting/job.sh 
-```
-
-This will execute the sanity check and provide a vetted list of nodes before running the distributed workload.
-
-Check the job status
-
-```
+#check job status
 squeue -j {jobid} --long
-```
 
+#check vetting results
+cat vetnode-{jobid}/results.txt
+```
 
 # Development
 
@@ -69,7 +82,7 @@ pip install -r requirements.txt
 
 ```
 cd src
-python -m vetnode diagnose ../templates/simple-config.yaml
+python -m vetnode diagnose ../examples/local-test/config.yaml
 ```
 
 
@@ -84,6 +97,7 @@ pytest
 ## Distribute
 
 ```
+pip install -r ./requirements-testing.txt
 python3 -m build --wheel
 twine upload dist/*         
 ```
