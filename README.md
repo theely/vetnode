@@ -38,13 +38,18 @@ To run a demo job that outputs a list of vetted nodes, follow these steps:
 
 # Clone the repository
 git clone https://github.com/theely/shrike.git shrike
-cd shrike
 
 # Submit the job 
-sbatch job-clariden.sh
+sbatch --account=csstaff shrike/examples/slurm-job-with-vetting/job.sh 
 ```
 
 This will execute the sanity check and provide a vetted list of nodes before running the distributed workload.
+
+Check the job status
+
+```
+squeue -j {jobid} --long
+```
 
 
 # Development
