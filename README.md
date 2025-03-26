@@ -21,7 +21,7 @@ vetnode setup ./examples/local-test/config.yaml
 vetnode diagnose ./examples/local-test/config.yaml
 ```
 
-## Usage Example
+## Workflow Usage Example
 
 The vetnode cli is intended to be embedded into your HPC workflow. 
 The following is a node vetting example for a ML (machine learning) workflow on a Slurm HPC cluster.
