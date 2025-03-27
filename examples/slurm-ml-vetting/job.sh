@@ -52,10 +52,6 @@ srun vetnode diagnose ./config.yaml &>> ./results.txt
 grep '^Cordon:' ./results.txt | awk '{print $2}' > ./cordoned-nodes.txt
 grep '^Vetted:' ./results.txt | awk '{print $2}' > ./vetted-nodes.txt
 
-echo "---- info ----"
-echo $(scontrol show hostnames $SLURM_NODELIST | head -n 1)
-echo $(hostname)
-
 
 #Run on healthy nodes only
 if [ $(wc -l < ./vetted-nodes.txt) -ge $REQUIRED_NODES ]; then
@@ -66,7 +62,7 @@ if [ $(wc -l < ./vetted-nodes.txt) -ge $REQUIRED_NODES ]; then
     curl -o all_reduce_bench.py https://raw.githubusercontent.com/stas00/ml-engineering/refs/heads/master/network/benchmarks/all_reduce_bench.py
 
     srun --gres=gpu:8 --nodes=$REQUIRED_NODES --exclude=./cordoned-nodes.txt --tasks-per-node=1 python -u -m torch.distributed.run --nproc_per_node=8 \
-    --nnodes $REQUIRED_NODES --rdzv_endpoint $(scontrol show hostnames $SLURM_NODELIST | head -n 1):6000 --rdzv_backend \
+    --nnodes $REQUIRED_NODES --rdzv_endpoint $(hostname):6000 --rdzv_backend \
     c10d all_reduce_bench.py
 
 else
