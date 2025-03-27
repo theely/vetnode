@@ -1,4 +1,4 @@
-name: Simple Configuration
+name: ML Vetting
 evals:
 - name: CudaKernel
   type: vetnode.evaluations.cuda_eval.CUDAEval
@@ -7,7 +7,5 @@ evals:
     - numpy
 - name: Check GPU
   type: vetnode.evaluations.gpu_eval.GPUEval
-  max_temp:  80
-  max_used_memory: 0.25
-- name: Random
-  type: vetnode.evaluations.random.RandomEval
+  max_temp:  30
+  max_used_memory: 0.2

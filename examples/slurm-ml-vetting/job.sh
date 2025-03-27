@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --nodes=6
+#SBATCH --nodes=10
 #SBATCH --time=0-00:15:00
 #SBATCH --account=a-csstaff
 
@@ -11,11 +11,11 @@
 # Set the exact number of nodes required to run the job.
 # You can allocate (#SBATCH --nodes=xy) more nodes than 
 # required to account for non healthy ones. 
-REQUIRED_NODES=4
+REQUIRED_NODES=8
 
 # The application/command you would like to run on the
 # vetted nodes.
-MAIN_JOB_COMMAND=hostname
+MAIN_JOB_COMMAND=python -m torch.distributed.torchrun --nproc_per_node=$(wc -l < vetted-nodes.txt) main.py
 #---------------------------------------------------------
 
 echo "██╗   ██╗███████╗████████╗███╗   ██╗ ██████╗ ██████╗ ███████╗"
@@ -54,7 +54,13 @@ grep '^Vetted:' ./results.txt | awk '{print $2}' > ./vetted-nodes.txt
 
 #Run on healthy nodes only
 if [ $(wc -l < ./vetted-nodes.txt) -ge $REQUIRED_NODES ]; then
-    srun -N $REQUIRED_NODES --exclude=./cordoned-nodes.txt $MAIN_JOB_COMMAND
+    
+    #srun -N $REQUIRED_NODES --exclude=./cordoned-nodes.txt $MAIN_JOB_COMMAND
+
+    srun --gres=gpu:8 --nodes=$REQUIRED_NODES --exclude=./cordoned-nodes.txt --tasks-per-node=1 python -u -m torch.distributed.run --nproc_per_node=8 \
+    --nnodes $REQUIRED_NODES --rdzv_endpoint $(scontrol show hostnames $SLURM_JOB_NODELIST | head -n 1):6000 --rdzv_backend \
+    c10d all_reduce_bench.py
+
 else
     echo "Job aborted!"
     echo "Reason: too few vetted nodes."

@@ -1,4 +1,4 @@
-name: Simple Configuration
+name: Local Node Vetting
 evals:
 - name: Random
   type: vetnode.evaluations.random.RandomEval
