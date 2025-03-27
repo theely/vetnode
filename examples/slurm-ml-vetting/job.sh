@@ -61,7 +61,12 @@ if [ $(wc -l < ./vetted-nodes.txt) -ge $REQUIRED_NODES ]; then
     pip install torch --index-url https://download.pytorch.org/whl/cu126
     curl -o all_reduce_bench.py https://raw.githubusercontent.com/stas00/ml-engineering/refs/heads/master/network/benchmarks/all_reduce_bench.py
 
-    srun --gres=gpu:8 --nodes=$REQUIRED_NODES --exclude=./cordoned-nodes.txt --tasks-per-node=1 python -u -m torch.distributed.run --nproc_per_node=8 \
+    EXCLUDE_ARG=""
+    if [[ -s cordoned-nodes.txt ]]; then
+        EXCLUDE_ARG="--exclude=./cordoned-nodes.txt"
+    fi
+
+    srun --gres=gpu:8 --nodes=$REQUIRED_NODES $EXCLUDE_ARG --tasks-per-node=1 python -u -m torch.distributed.run --nproc_per_node=8 \
     --nnodes $REQUIRED_NODES --rdzv_endpoint $(hostname):6000 --rdzv_backend \
     c10d all_reduce_bench.py
 
