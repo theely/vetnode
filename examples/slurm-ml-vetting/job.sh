@@ -59,7 +59,7 @@ if [ $(wc -l < ./vetted-nodes.txt) -ge $REQUIRED_NODES ]; then
     #srun -N $REQUIRED_NODES --exclude=./cordoned-nodes.txt $MAIN_JOB_COMMAND
 
     pip install torch --index-url https://download.pytorch.org/whl/cu126
-    curl -o all_reduce_bench.py https://raw.githubusercontent.com/stas00/ml-engineering/refs/heads/master/network/benchmarks/all_reduce_bench.py
+    curl -o all_reduce_bench.py https://raw.githubusercontent.com/theely/vetnode/refs/heads/main/examples/slurm-ml-vetting/all_reduce_bench.py
 
     EXCLUDE_ARG=""
     if [[ -s cordoned-nodes.txt ]]; then
