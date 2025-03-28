@@ -61,6 +61,26 @@ if [ $(wc -l < ./vetted-nodes.txt) -ge $REQUIRED_NODES ]; then
     pip install torch --index-url https://download.pytorch.org/whl/cu126
     curl -o all_reduce_bench.py https://raw.githubusercontent.com/theely/vetnode/refs/heads/main/examples/slurm-ml-vetting/all_reduce_bench.py
 
+    TOOLKIT=cuda12
+    LIB_PATH=$CONDA_PREFIX/lib
+
+    OFI_LIB=libnccl-net.so
+
+    # Activate AWS NCCL plugin
+    export LD_LIBRARY_PATH=$LIB_PATH:$LD_LIBRARY_PATH
+    export LD_LIBRARY_PATH=/opt/cray/libfabric/1.15.2.0/lib64/:$LD_LIBRARY_PATH
+    export LD_LIBRARY_PATH=/opt/cscs/aws-ofi-ccl-plugin/$TOOLKIT/:$LD_LIBRARY_PATH
+    export LD_PRELOAD=/opt/cscs/aws-ofi-ccl-plugin/$TOOLKIT/$OFI_LIB
+    export CXI_FORK_SAFE="1"
+    export CXI_FORK_SAFE_HP="1"
+    export FI_CXI_DISABLE_CQ_HUGETLB="1"
+    export NCCL_CROSS_NIC="1"
+    export NCCL_DEBUG="Info"
+    export NCCL_NET_GDR_LEVEL="PHB"
+    export FI_CXI_DISABLE_HOST_REGISTER="1"
+    export FI_MR_CACHE_MONITOR="userfaultfd"
+
+
     EXCLUDE_ARG=""
     if [[ -s cordoned-nodes.txt ]]; then
         EXCLUDE_ARG="--exclude=./cordoned-nodes.txt"
