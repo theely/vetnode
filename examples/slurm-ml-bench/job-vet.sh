@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --nodes=150
+#SBATCH --nodes=280
 #SBATCH --time=0-00:15:00
 #SBATCH --account=a-csstaff
 
@@ -11,11 +11,8 @@
 # Set the exact number of nodes required to run the job.
 # You can allocate (#SBATCH --nodes=xy) more nodes than 
 # required to account for non healthy ones. 
-REQUIRED_NODES=128
+REQUIRED_NODES=256
 
-# The application/command you would like to run on the
-# vetted nodes.
-MAIN_JOB_COMMAND=python -m torch.distributed.torchrun --nproc_per_node=$(wc -l < vetted-nodes.txt) main.py
 #---------------------------------------------------------
 
 echo "██╗   ██╗███████╗████████╗███╗   ██╗ ██████╗ ██████╗ ███████╗"
@@ -27,17 +24,17 @@ echo "  ╚═══╝  ╚══════╝   ╚═╝   ╚═╝  ╚�
                                                              
 
 # Set-up environment and node vetting cli
-WORK_DIR="vetnode-$SLURM_JOB_ID"
+WORK_DIR="/users/palmee/vetnode_bench/$SLURM_JOB_ID"
 mkdir $WORK_DIR
 cd $WORK_DIR
 
 # Download example configuration
-curl -o config.yaml https://raw.githubusercontent.com/theely/vetnode/refs/heads/main/examples/slurm-ml-vetting/config.yaml
+curl -o config.yaml https://raw.githubusercontent.com/theely/vetnode/refs/heads/main/examples/slurm-ml-bench/config.yaml
 touch "./results.txt"
 
-python3.11 -m venv .venv
-source .venv/bin/activate
-pip install --no-cache-dir vetnode
+#python3.11 -m venv /users/palmee/vetnode_bench/.venv
+source /users/palmee/vetnode_bench/.venv/bin/activate
+#pip install --no-cache-dir vetnode
 
 #Add CUDA
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/nvidia/hpc_sdk/Linux_aarch64/24.3/cuda/12.3/lib64/
@@ -58,7 +55,7 @@ if [ $(wc -l < ./vetted-nodes.txt) -ge $REQUIRED_NODES ]; then
     
     #srun -N $REQUIRED_NODES --exclude=./cordoned-nodes.txt $MAIN_JOB_COMMAND
 
-    pip install torch --index-url https://download.pytorch.org/whl/cu126
+    #pip install torch --index-url https://download.pytorch.org/whl/cu126
     curl -o all_reduce_bench.py https://raw.githubusercontent.com/theely/vetnode/refs/heads/main/examples/slurm-ml-vetting/all_reduce_bench.py
 
     export PATH_PLUGIN=/users/palmee/aws-ofi-nccl/install_4
