@@ -15,9 +15,8 @@ REQUIRED_NODES=2
 
 # The application/command you would like to run on the
 # vetted nodes.
-MAIN_JOB_COMMAND=python -u -m torch.distributed.run --nproc_per_node=4 \
-                --nnodes $REQUIRED_NODES --rdzv_endpoint $(hostname):6000 --rdzv_backend \
-                c10d all_reduce_bench.py
+MAIN_JOB_COMMAND="python -u -m torch.distributed.run --nproc_per_node=4 --nnodes ${REQUIRED_NODES} --rdzv_endpoint $(hostname):6000 --rdzv_backend c10d all_reduce_bench.py"
+
 #---------------------------------------------------------
 
 echo "██╗   ██╗███████╗████████╗███╗   ██╗ ██████╗ ██████╗ ███████╗"
@@ -54,11 +53,8 @@ srun vetnode diagnose ./config.yaml &>> ./results.txt
 grep '^Cordon:' ./results.txt | awk '{print $2}' > ./cordoned-nodes.txt
 grep '^Vetted:' ./results.txt | awk '{print $2}' > ./vetted-nodes.txt
 
-
 #Run on healthy nodes only
 if [ $(wc -l < ./vetted-nodes.txt) -ge $REQUIRED_NODES ]; then
-    
-    #srun -N $REQUIRED_NODES --exclude=./cordoned-nodes.txt $MAIN_JOB_COMMAND
     
     pip install torch --index-url https://download.pytorch.org/whl/cu126
     curl -o all_reduce_bench.py https://raw.githubusercontent.com/theely/vetnode/refs/heads/main/examples/slurm-ml-vetting/all_reduce_bench.py
@@ -77,7 +73,7 @@ if [ $(wc -l < ./vetted-nodes.txt) -ge $REQUIRED_NODES ]; then
     export CXI_FORK_SAFE_HP="1"
     export FI_CXI_DISABLE_CQ_HUGETLB="1"
     export NCCL_CROSS_NIC="1"
-    export NCCL_DEBUG="Info"
+    export NCCL_DEBUG="Error"
     export NCCL_NET_GDR_LEVEL="PHB"
     export FI_CXI_DISABLE_HOST_REGISTER="1"
     export FI_MR_CACHE_MONITOR="userfaultfd"
@@ -88,9 +84,7 @@ if [ $(wc -l < ./vetted-nodes.txt) -ge $REQUIRED_NODES ]; then
         EXCLUDE_ARG="--exclude=./cordoned-nodes.txt"
     fi
 
-    srun -N $REQUIRED_NODES $EXCLUDE_ARG --tasks-per-node=1 python -u -m torch.distributed.run --nproc_per_node=4 \
-                --nnodes $REQUIRED_NODES --rdzv_endpoint $(hostname):6000 --rdzv_backend \
-                c10d all_reduce_bench.py
+    srun -N $REQUIRED_NODES $EXCLUDE_ARG --tasks-per-node=1 $MAIN_JOB_COMMAND
 
 else
     echo "Job aborted!"
