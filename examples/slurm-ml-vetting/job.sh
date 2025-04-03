@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --nodes=150
+#SBATCH --nodes=3
 #SBATCH --time=0-00:15:00
 #SBATCH --account=a-csstaff
 
@@ -11,11 +11,13 @@
 # Set the exact number of nodes required to run the job.
 # You can allocate (#SBATCH --nodes=xy) more nodes than 
 # required to account for non healthy ones. 
-REQUIRED_NODES=128
+REQUIRED_NODES=2
 
 # The application/command you would like to run on the
 # vetted nodes.
-MAIN_JOB_COMMAND=python -m torch.distributed.torchrun --nproc_per_node=$(wc -l < vetted-nodes.txt) main.py
+MAIN_JOB_COMMAND=python -u -m torch.distributed.run --nproc_per_node=4 \
+                --nnodes $REQUIRED_NODES --rdzv_endpoint $(hostname):6000 --rdzv_backend \
+                c10d all_reduce_bench.py
 #---------------------------------------------------------
 
 echo "██╗   ██╗███████╗████████╗███╗   ██╗ ██████╗ ██████╗ ███████╗"
@@ -57,14 +59,17 @@ grep '^Vetted:' ./results.txt | awk '{print $2}' > ./vetted-nodes.txt
 if [ $(wc -l < ./vetted-nodes.txt) -ge $REQUIRED_NODES ]; then
     
     #srun -N $REQUIRED_NODES --exclude=./cordoned-nodes.txt $MAIN_JOB_COMMAND
-
+    
     pip install torch --index-url https://download.pytorch.org/whl/cu126
     curl -o all_reduce_bench.py https://raw.githubusercontent.com/theely/vetnode/refs/heads/main/examples/slurm-ml-vetting/all_reduce_bench.py
-
-    export PATH_PLUGIN=/users/palmee/aws-ofi-nccl/install_4
+    
+    mkdir aws-ofi-nccl
+    mkdir aws-ofi-nccl/lib
+    arch=$(uname -m)
+    curl -o ./aws-ofi-nccl/lib/libnccl-net.so https://jfrog.svc.cscs.ch/artifactory/aws-ofi-nccl-gen-dev/v1.9.2-aws-cf6f657/${arch}/SLES/15.5/cuda12/lib/libnccl-net.so
+    export PATH_PLUGIN=$(pwd)/aws-ofi-nccl
 
     # Activate AWS NCCL plugin
-    export LD_LIBRARY_PATH=/opt/nvidia/hpc_sdk/Linux_aarch64/24.3/cuda/12.3/lib64/:$LD_LIBRARY_PATH
     export LD_LIBRARY_PATH=/opt/cray/libfabric/1.15.2.0/lib64/:$LD_LIBRARY_PATH
     export LD_LIBRARY_PATH=$PATH_PLUGIN/lib/:$LD_LIBRARY_PATH
     export LD_PRELOAD=$PATH_PLUGIN/lib/libnccl-net.so 
@@ -83,9 +88,7 @@ if [ $(wc -l < ./vetted-nodes.txt) -ge $REQUIRED_NODES ]; then
         EXCLUDE_ARG="--exclude=./cordoned-nodes.txt"
     fi
 
-    srun -N $REQUIRED_NODES $EXCLUDE_ARG --tasks-per-node=1 python -u -m torch.distributed.run --nproc_per_node=4 \
-    --nnodes $REQUIRED_NODES --rdzv_endpoint $(hostname):6000 --rdzv_backend \
-    c10d all_reduce_bench.py
+    srun -N $REQUIRED_NODES $EXCLUDE_ARG --tasks-per-node=1 $MAIN_JOB_COMMAND
 
 else
     echo "Job aborted!"

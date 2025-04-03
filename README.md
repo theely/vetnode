@@ -131,16 +131,20 @@ https://download.opensuse.org/repositories/home:/aeszter/15.5/x86_64/libhwloc5-1
 
 
 ## Build plugin in image
-export DOCKER_DEFAULT_PLATFORM=linux/amd64
+export DOCKER_DEFAULT_PLATFORM=linux/amd64 export 
+#export DOCKER_DEFAULT_PLATFORM=linux/arm64
 docker run -i -t registry.suse.com/suse/sle15:15.5      
 zypper install -y libtool git gcc awk make wget
 
 zypper addrepo https://developer.download.nvidia.com/compute/cuda/repos/opensuse15/x86_64/cuda-opensuse15.repo
-zypper refresh
+zypper addrepo https://developer.download.nvidia.com/compute/cuda/repos/sles15/sbsa/cuda-sles15.repo
+zypper --non-interactive --gpg-auto-import-keys refresh
 zypper install -y cuda-toolkit-12-3
 
 ## Add missing lib path required by hwloc
-echo "/usr/local/cuda/targets/x86_64-linux/lib/stubs/" | tee /etc/ld.so.conf.d/nvidiaml.conf
+echo "/usr/local/cuda/targets/x86_64-linux/lib/stubs/" | tee /etc/ld.so.conf.d/nvidiaml-x86_64.conf
+echo "/usr/local/cuda/targets/sbsa-linux/lib/stubs/" | tee /etc/ld.so.conf.d/nvidiaml-sbsa.conf
+
 ldconfig
 ldconfig -p | grep libnvidia
 
@@ -314,3 +318,68 @@ make install
 
 
 NOT WORKING!!! We need to use the crey lib fabric
+
+
+
+## Build plugin in image
+export DOCKER_DEFAULT_PLATFORM=linux/amd64
+docker run -i -t registry.suse.com/suse/sle15:15.5      
+zypper install -y libtool git gcc awk make wget
+
+zypper addrepo https://developer.download.nvidia.com/compute/cuda/repos/opensuse15/x86_64/cuda-opensuse15.repo
+zypper refresh
+zypper install -y cuda-toolkit-12-3
+
+## Add missing lib path required by hwloc
+echo "/usr/local/cuda/targets/x86_64-linux/lib/stubs/" | tee /etc/ld.so.conf.d/nvidiaml.conf
+ldconfig
+ldconfig -p | grep libnvidia
+
+git clone -b v1.19.0 https://github.com/ofiwg/libfabric.git
+cd libfabric
+autoupdate
+./autogen.sh
+#CC=gcc ./configure --prefix=/users/palmee/libfabric/install
+CC=gcc ./configure
+make
+make install
+
+wget https://download.open-mpi.org/release/hwloc/v2.12/hwloc-2.12.0.tar.gz
+tar -xvzf hwloc-2.12.0.tar.gz 
+cd hwloc-2.12.0
+#CC=gcc ./configure --prefix=/users/palmee/hwloc-2.12.0/install
+CC=gcc ./configure
+make 
+make install
+
+
+git clone -b v1.14.0 https://github.com/aws/aws-ofi-nccl.git
+cd aws-ofi-nccl
+mkdir install
+GIT_COMMIT=$(git rev-parse --short HEAD)
+
+./autogen.sh
+CC=gcc ./configure --disable-tests --without-mpi \
+          --enable-cudart-dynamic  \
+          --prefix=./install/v1.14.0-${GIT_COMMIT}/x86_64/12.3/ \
+          --with-cuda=/usr/local/cuda 
+
+
+
+TODO:
+consider building an rpm: https://www.redhat.com/en/blog/create-rpm-package
+
+
+
+CC=gcc ./configure --disable-tests --without-mpi \
+          --enable-cudart-dynamic  \
+          --prefix=/users/palmee/aws-ofi-nccl/install_2/ \
+          --with-libfabric=/opt/cray/libfabric/1.15.2.0 --with-cuda=/opt/nvidia/hpc_sdk/Linux_aarch64/24.3/cuda/12.3/ --with-hwloc=/users/palmee/hwloc-2.12.0/install
+
+
+
+export LD_LIBRARY_PATH=/opt/cray/libfabric/1.15.2.0/lib64/:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=/opt/nvidia/hpc_sdk/Linux_aarch64/24.3/cuda/12.3/lib64/:$LD_LIBRARY_PATH
+ld /users/palmee/aws-ofi-nccl/install_2/lib/libnccl-net.so 
+
+
