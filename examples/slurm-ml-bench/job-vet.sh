@@ -78,6 +78,13 @@ if [ $(wc -l < ./vetted-nodes.txt) -ge $REQUIRED_NODES ]; then
     export FI_CXI_DISABLE_HOST_REGISTER="1"
     export FI_MR_CACHE_MONITOR="userfaultfd"
 
+    ld $LD_PRELOAD
+    if [[ $? -ne 0 ]]
+    then
+        echo "Job aborted!"
+        echo "Reason: unable to load aws-ofi-nccl plugin"
+        exit $?
+    fi
 
     EXCLUDE_ARG=""
     if [[ -s cordoned-nodes.txt ]]; then
