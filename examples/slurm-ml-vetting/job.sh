@@ -88,7 +88,9 @@ if [ $(wc -l < ./vetted-nodes.txt) -ge $REQUIRED_NODES ]; then
         EXCLUDE_ARG="--exclude=./cordoned-nodes.txt"
     fi
 
-    srun -N $REQUIRED_NODES $EXCLUDE_ARG --tasks-per-node=1 $MAIN_JOB_COMMAND
+    srun -N $REQUIRED_NODES $EXCLUDE_ARG --tasks-per-node=1 python -u -m torch.distributed.run --nproc_per_node=4 \
+                --nnodes $REQUIRED_NODES --rdzv_endpoint $(hostname):6000 --rdzv_backend \
+                c10d all_reduce_bench.py
 
 else
     echo "Job aborted!"
