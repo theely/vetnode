@@ -76,8 +76,7 @@ class NCCLEval(BaseEval):
         start_event = torch.cuda.Event(enable_timing=True)
         end_event = torch.cuda.Event(enable_timing=True)
         
-        #dist.barrier(device_ids=local_rank)
-        dist.barrier()
+        dist.barrier(device_ids=[local_rank])
         start_event.record()
         dist.all_reduce(tensor)
         end_event.record()
