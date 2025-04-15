@@ -23,7 +23,7 @@ class ScontrolCommand:
     
    async def _execute(self): 
       cmd = ['scontrol', 'show', 'hostnames', '$SLURM_JOB_NODELIST']
-      proc = await asyncio.create_subprocess_shell(*cmd,
+      proc = await asyncio.create_subprocess_shell(' '.join(cmd),
          stdout=asyncio.subprocess.PIPE,
          stderr=asyncio.subprocess.PIPE)
 
