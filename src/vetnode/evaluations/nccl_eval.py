@@ -41,15 +41,14 @@ class NCCLEval(BaseEval):
             case _:
                 raise NotImplementedError("Support for the rquested scheduler has not been implemented.")
 
-        torch.cuda.set_device(local_rank)
-
         dist.init_process_group(
             backend="nccl",
             init_method="tcp://{}:{}".format(master_node, 6001),
             rank=local_rank,
             world_size=len(nodes),
-            device_id=torch.device('cuda:0')
         )
+        torch.cuda.set_device(local_rank)
+        
 
         lower_limit = 32
         upper_limit = 32
