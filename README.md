@@ -84,6 +84,7 @@ pip install -r requirements.txt
 
 ```
 cd src
+python -m vetnode setup ../examples/local-test/config.yaml
 python -m vetnode diagnose ../examples/local-test/config.yaml
 ```
 
