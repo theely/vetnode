@@ -30,7 +30,6 @@ echo "  ╚═══╝  ╚══════╝   ╚═╝   ╚═╝  ╚�
 # Set-up environment and node vetting cli
 WORK_DIR="vetnode-$SLURM_JOB_ID"
 mkdir $WORK_DIR
-cd $WORK_DIR
 
 # Download vetnode source code
 git clone https://github.com/theely/vetnode.git $WORK_DIR
@@ -39,6 +38,7 @@ cd $WORK_DIR
 
 python3.11 -m venv .venv
 source .venv/bin/activate
+python -m pip --no-cache-dir install --upgrade pip
 pip install --no-cache-dir -r ./requirements.txt
 cd src
 
