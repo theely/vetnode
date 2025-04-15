@@ -46,10 +46,10 @@ cd src
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/nvidia/hpc_sdk/Linux_aarch64/24.3/cuda/12.3/lib64/
 
 #Setup node vetting on main node
-python -m vetnode setup ./config.yaml &>> ./results.txt
+python -m vetnode setup ../examples/slurm-ml-vetting/config.yaml &>> ./results.txt
 
 # Run nodes vetting
-python -m vetnode diagnose ./config.yaml &>> ./results.txt
+python -m vetnode diagnose ../examples/slurm-ml-vetting/config.yaml &>> ./results.txt
 
 # Extract node lists
 grep '^Cordon:' ./results.txt | awk '{print $2}' > ./cordoned-nodes.txt
