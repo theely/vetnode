@@ -5,6 +5,11 @@ evals:
 - name: NCCL
   type: vetnode.evaluations.nccl_eval.NCCLEval
   scheduler: slurm
+  payload: 4GB
+  min_bandwidth: 15gbit
+  warmup:
+    payload: 256MB
+    runs: 3
   requirements:
       - ['torch', '--index-url', 'https://download.pytorch.org/whl/cu126']
       - numpy
