@@ -15,7 +15,7 @@ REQUIRED_NODES=2
 
 # The application/command you would like to run on the
 # vetted nodes.
-MAIN_JOB_COMMAND="python -u -m torch.distributed.run --nproc_per_node=4 --nnodes ${REQUIRED_NODES} --rdzv_endpoint $(hostname):6000 --rdzv_backend c10d all_reduce_bench.py"
+MAIN_JOB_COMMAND="python -u -m torch.distributed.run --nproc_per_node=1 --nnodes ${REQUIRED_NODES} --rdzv_endpoint $(hostname):6000 --rdzv_backend c10d all_reduce_bench.py"
 
 #---------------------------------------------------------
 
