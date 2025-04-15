@@ -48,6 +48,7 @@ class NCCLEval(BaseEval):
             init_method="tcp://{}:{}".format(master_node, 6001),
             rank=local_rank,
             world_size=len(nodes),
+            device_id=local_rank
         )
 
         lower_limit = 32
@@ -63,7 +64,7 @@ class NCCLEval(BaseEval):
             tensor = None
             # /4 is for 4 bytes in fp32
             tensor = torch.rand(size//4, 1, dtype=torch.float32).cuda(local_rank)
-            self.timed_allreduce(tensor,size,len(nodes))
+            self.timed_allreduce(local_rank,tensor,size,len(nodes))
 
         
         dist.destroy_process_group()
@@ -71,11 +72,12 @@ class NCCLEval(BaseEval):
         return True
     
 
-    def timed_allreduce(self,tensor,size,ranks):
+    def timed_allreduce(self,local_rank,tensor,size,ranks):
         
         start_event = torch.cuda.Event(enable_timing=True)
         end_event = torch.cuda.Event(enable_timing=True)
         
+        #dist.barrier(device_ids=local_rank)
         dist.barrier()
         start_event.record()
         dist.all_reduce(tensor)
