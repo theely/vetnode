@@ -331,56 +331,37 @@ zypper addrepo https://developer.download.nvidia.com/compute/cuda/repos/opensuse
 zypper refresh
 zypper install -y cuda-toolkit-12-3
 
-## Add missing lib path required by hwloc
-echo "/usr/local/cuda/targets/x86_64-linux/lib/stubs/" | tee /etc/ld.so.conf.d/nvidiaml.conf
-ldconfig
-ldconfig -p | grep libnvidia
-
-git clone -b v1.19.0 https://github.com/ofiwg/libfabric.git
-cd libfabric
-autoupdate
-./autogen.sh
-#CC=gcc ./configure --prefix=/users/palmee/libfabric/install
-CC=gcc ./configure
-make
-make install
+## Build in Clariden
 
 wget https://download.open-mpi.org/release/hwloc/v2.12/hwloc-2.12.0.tar.gz
 tar -xvzf hwloc-2.12.0.tar.gz 
 cd hwloc-2.12.0
-#CC=gcc ./configure --prefix=/users/palmee/hwloc-2.12.0/install
-CC=gcc ./configure
+CC=gcc ./configure --prefix=/users/palmee/hwloc-2.12.0/install
+#CC=gcc ./configure
 make 
 make install
 
 
-git clone -b v1.14.0 https://github.com/aws/aws-ofi-nccl.git
+git clone -b v1.14.1 https://github.com/aws/aws-ofi-nccl.git
 cd aws-ofi-nccl
 mkdir install
-GIT_COMMIT=$(git rev-parse --short HEAD)
 
 ./autogen.sh
 CC=gcc ./configure --disable-tests --without-mpi \
           --enable-cudart-dynamic  \
-          --prefix=./install/v1.14.0-${GIT_COMMIT}/x86_64/12.3/ \
-          --with-cuda=/usr/local/cuda 
+          --prefix=/users/palmee/aws-ofi-nccl/install/ \
+          --with-libfabric=/opt/cray/libfabric/1.22.0/ \
+          --with-cuda=/opt/nvidia/hpc_sdk/Linux_aarch64/24.3/cuda/12.3/ \
+          --with-hwloc=/users/palmee/hwloc-2.12.0/install
 
-
-
-TODO:
-consider building an rpm: https://www.redhat.com/en/blog/create-rpm-package
-
-
-
-CC=gcc ./configure --disable-tests --without-mpi \
-          --enable-cudart-dynamic  \
-          --prefix=/users/palmee/aws-ofi-nccl/install_2/ \
-          --with-libfabric=/opt/cray/libfabric/1.15.2.0 --with-cuda=/opt/nvidia/hpc_sdk/Linux_aarch64/24.3/cuda/12.3/ --with-hwloc=/users/palmee/hwloc-2.12.0/install
-
+make 
+make install
 
 
 export LD_LIBRARY_PATH=/opt/cray/libfabric/1.15.2.0/lib64/:$LD_LIBRARY_PATH
 export LD_LIBRARY_PATH=/opt/nvidia/hpc_sdk/Linux_aarch64/24.3/cuda/12.3/lib64/:$LD_LIBRARY_PATH
-ld /users/palmee/aws-ofi-nccl/install_2/lib/libnccl-net.so 
+ld /users/palmee/aws-ofi-nccl/install/lib/libnccl-net.so 
 
 
+TODO:
+consider building an rpm: https://www.redhat.com/en/blog/create-rpm-package

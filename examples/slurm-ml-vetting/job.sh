@@ -48,12 +48,14 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/nvidia/hpc_sdk/Linux_aarch64/24.3/c
 mkdir aws-ofi-nccl
 mkdir aws-ofi-nccl/lib
 arch=$(uname -m)
-curl -o ./aws-ofi-nccl/lib/libnccl-net.so https://jfrog.svc.cscs.ch/artifactory/aws-ofi-nccl-gen-dev/v1.9.2-aws-cf6f657/${arch}/SLES/15.5/cuda12/lib/libnccl-net.so
-export PATH_PLUGIN=$(pwd)/aws-ofi-nccl
+#curl -o ./aws-ofi-nccl/lib/libnccl-net.so https://jfrog.svc.cscs.ch/artifactory/aws-ofi-nccl-gen-dev/v1.9.2-aws-cf6f657/${arch}/SLES/15.5/cuda12/lib/libnccl-net.so
+#export PATH_PLUGIN=$(pwd)/aws-ofi-nccl
+
+export PATH_PLUGIN=/users/palmee/aws-ofi-nccl/install
 
 # Activate AWS NCCL plugin
 export LD_LIBRARY_PATH=/opt/nvidia/hpc_sdk/Linux_aarch64/24.3/cuda/12.3/lib64/:$LD_LIBRARY_PATH
-export LD_LIBRARY_PATH=/opt/cray/libfabric/1.15.2.0/lib64/:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=/opt/cray/libfabric/1.22.0/lib64/:$LD_LIBRARY_PATH
 export LD_LIBRARY_PATH=$PATH_PLUGIN/lib/:$LD_LIBRARY_PATH
 export LD_PRELOAD=$PATH_PLUGIN/lib/libnccl-net.so 
 export CXI_FORK_SAFE="1"
