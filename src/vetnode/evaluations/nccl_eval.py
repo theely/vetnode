@@ -28,7 +28,7 @@ class NCCLEval(BaseEval):
         return await asyncio.get_event_loop().run_in_executor(executor, self._check)
 
 
-    async def _check(self)->bool:
+    def _check(self)->bool:
 
         local_rank = None
         nodes = None
@@ -36,7 +36,7 @@ class NCCLEval(BaseEval):
         match self.scheduler:
             case "slurm":
                 local_rank = int(os.environ["SLURM_PROCID"])
-                nodes = await ScontrolCommand().run().hostnames
+                nodes = asyncio.run(ScontrolCommand().run()).hostnames
                 master_node = nodes[0]
             case _:
                 raise NotImplementedError("Support for the rquested scheduler has not been implemented.")
