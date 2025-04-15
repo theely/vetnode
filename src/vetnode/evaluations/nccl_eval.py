@@ -4,7 +4,7 @@ import datetime
 import os
 from typing import Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ByteSize
 
 
 from vetnode.commands.scontrol.scontrol_command import ScontrolCommand
@@ -20,7 +20,7 @@ conv_to_GBps = lambda v : v/10**9
 
 
 class NCCLEvalWarmUp(BaseModel):
-    payload:int= 28
+    payload:ByteSize= '256MB'
     runs:int= 3
 
 class NCCLEval(BaseEval):
@@ -28,9 +28,9 @@ class NCCLEval(BaseEval):
     type: Literal["vetnode.evaluations.nccl_eval.NCCLEval"]
     requirements: Literal[[['torch','--index-url','https://download.pytorch.org/whl/cu126'],"numpy"]]
     scheduler:  Literal["slurm","openPBS"]
-    payload: int = 32 #4GB  2**15 to 2**34 => 32KB to 16GB
+    payload: int = '4GB'
     warmup: NCCLEvalWarmUp
-    min_bandwidth: int = 15000000000 #15 GBps
+    min_bandwidth: ByteSize = '15gbit'
     def verify(self)->bool:
         return True
 
@@ -62,13 +62,15 @@ class NCCLEval(BaseEval):
         
         tensor = None
         # /4 is for 4 bytes in fp32
-        tensor = torch.rand((2**self.warmup.payload)//4, 1, dtype=torch.float32).cuda(local_rank)
+        print(f"size expected: {2**32}")
+        print(f"size got: {self.warmup.payload}")
+        tensor = torch.rand(self.warmup.payload//4, 1, dtype=torch.float32).cuda(local_rank)
         for i in range(self.warmup.runs):
-             self.timed_allreduce(local_rank,tensor,(2**self.warmup.payload),len(nodes))
+             self.timed_allreduce(local_rank,tensor,self.warmup.payload,len(nodes))
 
         # /4 is for 4 bytes in fp32
-        tensor = torch.rand((2**self.payload)//4, 1, dtype=torch.float32).cuda(local_rank)
-        bandwith = self.timed_allreduce(local_rank,tensor,(2**self.payload),len(nodes))
+        tensor = torch.rand(self.payload//4, 1, dtype=torch.float32).cuda(local_rank)
+        bandwith = self.timed_allreduce(local_rank,tensor,self.payload,len(nodes))
 
         
         dist.destroy_process_group()
