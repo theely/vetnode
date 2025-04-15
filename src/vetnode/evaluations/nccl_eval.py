@@ -28,7 +28,7 @@ class NCCLEval(BaseEval):
     type: Literal["vetnode.evaluations.nccl_eval.NCCLEval"]
     requirements: Literal[[['torch','--index-url','https://download.pytorch.org/whl/cu126'],"numpy"]]
     scheduler:  Literal["slurm","openPBS"]
-    payload: int = '4GB'
+    payload: ByteSize = '4GB'
     warmup: NCCLEvalWarmUp
     min_bandwidth: ByteSize = '15gbit'
     def verify(self)->bool:
