@@ -1,5 +1,6 @@
 
 import asyncio
+import datetime
 import os
 from typing import Literal
 
@@ -44,6 +45,7 @@ class NCCLEval(BaseEval):
         dist.init_process_group(
             backend="nccl",
             init_method="tcp://{}:{}".format(master_node, 6001),
+            timeout=datetime.timedelta(seconds=5),
             rank=local_rank,
             world_size=len(nodes),
         )

@@ -49,7 +49,7 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/nvidia/hpc_sdk/Linux_aarch64/24.3/c
 python -m vetnode setup ../examples/slurm-ml-vetting/config.yaml &>> ../results.txt
 
 # Run nodes vetting
-python -m vetnode diagnose ../examples/slurm-ml-vetting/config.yaml &>> ../results.txt
+srun python -m vetnode diagnose ../examples/slurm-ml-vetting/config.yaml &>> ../results.txt
 
 #back to root folder
 cd ..
