@@ -29,7 +29,7 @@ class NCCLEval(BaseEval):
     scheduler:  Literal["slurm","openPBS"]
     size: int = 32 #4GB  2**15 to 2**34 => 32KB to 16GB
     warmup: NCCLEvalWarmUp
-
+    min_bandwidth: int = 3 #GBps
     def verify(self)->bool:
         return True
 
@@ -86,8 +86,10 @@ class NCCLEval(BaseEval):
         end_event.record()
         torch.cuda.synchronize()
         duration = start_event.elapsed_time(end_event) / 1000
+        print(f"Size: {size}")
         print(f"Duration: {start_event.elapsed_time(end_event)}")
-        bandwith = size/duration * (2*(ranks - 1) / ranks)
+        bandwith = size/duration #* (2*(ranks - 1) / ranks)
+        print(f"bandwith: {bandwith}")
         print(f" {conv_to_GBps(bandwith):6.2f}GBps")
         return True
 
