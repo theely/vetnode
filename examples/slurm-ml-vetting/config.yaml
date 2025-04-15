@@ -9,3 +9,9 @@ evals:
   type: vetnode.evaluations.gpu_eval.GPUEval
   max_temp:  30
   max_used_memory: 0.2
+- name: NCCL
+  type: vetnode.evaluations.nccl_eval.NCCLEval
+  scheduler: slurm
+  requirements:
+      - ['torch', '--index-url', 'https://download.pytorch.org/whl/cu126']
+      - numpy
