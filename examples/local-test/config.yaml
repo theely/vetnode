@@ -2,6 +2,8 @@ name: Local Node Vetting
 evals:
 - name: Random
   type: vetnode.evaluations.random.RandomEval
-- name: Internet Access
-  type: vetnode.evaluations.internet_access.InternetAccessEval
-  host: google.com
+- name: NCCL
+  type: vetnode.evaluations.nccl_eval.NCCLEval
+  scheduler: slurm
+  requirements:
+      - torch --index-url https://download.pytorch.org/whl/cu126

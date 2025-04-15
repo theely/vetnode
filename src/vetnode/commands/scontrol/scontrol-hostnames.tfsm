@@ -1,0 +1,8 @@
+# Define GPU values template
+Value hostname (\S+)
+
+
+# Allway starts in 'Start' state.
+Start
+  ^${hostname} -> Record
+
