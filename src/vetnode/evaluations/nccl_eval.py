@@ -4,10 +4,8 @@ import os
 from typing import Literal
 
 
-from vetnode.commands.scontrol.models import ScontrolOutput
 from vetnode.commands.scontrol.scontrol_command import ScontrolCommand
 from vetnode.evaluations.base_eval import BaseEval
-from cuda import cuda, nvrtc
 import torch
 import torch.distributed as dist
 
