@@ -7,3 +7,4 @@ evals:
   scheduler: slurm
   requirements:
       - ['torch', '--index-url', 'https://download.pytorch.org/whl/cu126']
+      - numpy
