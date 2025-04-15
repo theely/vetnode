@@ -27,8 +27,8 @@ def get_device_info():
         return "Unknown accelerator"
 
 
-def timed_allreduce(tensor, size, start_event, end_event):
-    dist.barrier()
+def timed_allreduce(local_rank,tensor, size, start_event, end_event):
+    dist.barrier(device_ids=[local_rank])
     start_event.record()
     dist.all_reduce(tensor)
     end_event.record()
@@ -101,14 +101,14 @@ def run(local_rank):
 
         # do a few warm up iterations
         for i in range(WARMUPS):
-            timed_allreduce(tensor, size, start_event, end_event)
+            timed_allreduce(local_rank,tensor, size, start_event, end_event)
 
         # real benchmark
         algbw_gather = []
         for i in range(TRIALS):
             if is_global_rank_0:
                 print(f"{fmt_bytes(size):>6}: {i+1}", end="\r")
-            algbw_gather += timed_allreduce(tensor, size, start_event, end_event)
+            algbw_gather += timed_allreduce(local_rank,tensor, size, start_event, end_event)
         if is_global_rank_0:
             print()
 
