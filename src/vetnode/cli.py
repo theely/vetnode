@@ -76,5 +76,9 @@ def load_evals(eval_configs: List[EvalConfiguration], install:bool=False):
 
 def load_requirements(requirements: List[str]):
     for package in requirements:
-        cmd = [sys.executable, "-m", "pip", "install"] + package
+        cmd = [sys.executable, "-m", "pip", "install"]
+        if isinstance(package, str):
+            cmd.append(package)
+        else:
+            cmd += package
         subprocess.check_call(cmd)
