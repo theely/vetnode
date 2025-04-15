@@ -7,7 +7,7 @@ from pydantic import BaseModel
 class EvalConfiguration(BaseModel, extra='allow'):
     name:str
     type:str
-    requirements:Optional[List[str]]=None
+    requirements:Optional[List[str | List[str]]]=None
 
 class Evaluation(BaseModel):
    test_name:str
