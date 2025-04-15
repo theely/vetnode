@@ -17,8 +17,8 @@ conv_to_GBps = lambda v : v/10**9
 
 
 class NCCLEvalWarmUp(BaseEval):
-    size: 28
-    runs: 3
+    size:int= 28
+    runs:int= 3
 
 class NCCLEval(BaseEval):
     name:str
