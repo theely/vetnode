@@ -12,6 +12,10 @@ evals:
 - name: NCCL
   type: vetnode.evaluations.nccl_eval.NCCLEval
   scheduler: slurm
+  size: 32
+  warmup:
+    size: 28
+    runs: 3
   requirements:
       - ['torch', '--index-url', 'https://download.pytorch.org/whl/cu126']
       - numpy

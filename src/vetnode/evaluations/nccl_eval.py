@@ -16,11 +16,17 @@ import torch.distributed as dist
 conv_to_GBps = lambda v : v/10**9
 
 
+class NCCLEvalWarmUp(BaseEval):
+    size: 28
+    runs: 3
+
 class NCCLEval(BaseEval):
     name:str
     type: Literal["vetnode.evaluations.nccl_eval.NCCLEval"]
     requirements: Literal[[['torch','--index-url','https://download.pytorch.org/whl/cu126'],"numpy"]]
     scheduler:  Literal["slurm","openPBS"]
+    size: int = 32 #4GB  2**15 to 2**34 => 32KB to 16GB
+    warmup: NCCLEvalWarmUp
 
     def verify(self)->bool:
         return True
@@ -51,21 +57,15 @@ class NCCLEval(BaseEval):
         )
         torch.cuda.set_device(local_rank)
         
+        tensor = None
+        # /4 is for 4 bytes in fp32
+        tensor = torch.rand((2**self.warmup.size)//4, 1, dtype=torch.float32).cuda(local_rank)
+        for i in range(self.warmup.runs):
+             self.timed_allreduce(local_rank,tensor,(2**self.warmup.size),len(nodes))
 
-        lower_limit = 32
-        upper_limit = 32
-
-        #lower_limit = 15
-        #upper_limit = 34
-        # 2**15 to 2**34 => 32KB to 16GB
-        sizes = [2**x for x in range(lower_limit, upper_limit+1)]
-
-        for size in sizes:
-            # clear prev-iteration memory for cards w/ ~24GB
-            tensor = None
-            # /4 is for 4 bytes in fp32
-            tensor = torch.rand(size//4, 1, dtype=torch.float32).cuda(local_rank)
-            self.timed_allreduce(local_rank,tensor,size,len(nodes))
+        # /4 is for 4 bytes in fp32
+        tensor = torch.rand((2**self.size)//4, 1, dtype=torch.float32).cuda(local_rank)
+        self.timed_allreduce(local_rank,tensor,(2**self.size),len(nodes))
 
         
         dist.destroy_process_group()

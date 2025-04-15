@@ -40,10 +40,41 @@ python3.11 -m venv .venv
 source .venv/bin/activate
 python -m pip --no-cache-dir install --upgrade pip
 pip install --no-cache-dir -r ./requirements.txt
-cd src
 
 #Add CUDA
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/nvidia/hpc_sdk/Linux_aarch64/24.3/cuda/12.3/lib64/
+
+#Add NCCL Libfabric support
+mkdir aws-ofi-nccl
+mkdir aws-ofi-nccl/lib
+arch=$(uname -m)
+curl -o ./aws-ofi-nccl/lib/libnccl-net.so https://jfrog.svc.cscs.ch/artifactory/aws-ofi-nccl-gen-dev/v1.9.2-aws-cf6f657/${arch}/SLES/15.5/cuda12/lib/libnccl-net.so
+export PATH_PLUGIN=$(pwd)/aws-ofi-nccl
+
+# Activate AWS NCCL plugin
+export LD_LIBRARY_PATH=/opt/nvidia/hpc_sdk/Linux_aarch64/24.3/cuda/12.3/lib64/:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=/opt/cray/libfabric/1.15.2.0/lib64/:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=$PATH_PLUGIN/lib/:$LD_LIBRARY_PATH
+export LD_PRELOAD=$PATH_PLUGIN/lib/libnccl-net.so 
+export CXI_FORK_SAFE="1"
+export CXI_FORK_SAFE_HP="1"
+export FI_CXI_DISABLE_CQ_HUGETLB="1"
+export NCCL_CROSS_NIC="1"
+export NCCL_DEBUG="Error"
+export NCCL_NET_GDR_LEVEL="PHB"
+export FI_CXI_DISABLE_HOST_REGISTER="1"
+export FI_MR_CACHE_MONITOR="userfaultfd"
+
+ld $LD_PRELOAD
+if [[ $? -ne 0 ]]
+then
+    echo "Job aborted!"
+    echo "Reason: unable to load aws-ofi-nccl plugin"
+    exit $?
+fi
+
+#Run vetting from src code
+cd src
 
 #Setup node vetting on main node
 python -m vetnode setup ../examples/slurm-ml-vetting/config.yaml &>> ../results.txt
@@ -64,32 +95,6 @@ if [ $(wc -l < ./vetted-nodes.txt) -ge $REQUIRED_NODES ]; then
     pip install torch --index-url https://download.pytorch.org/whl/cu126
     curl -o all_reduce_bench.py https://raw.githubusercontent.com/theely/vetnode/refs/heads/main/examples/slurm-ml-vetting/all_reduce_bench.py
     
-    mkdir aws-ofi-nccl
-    mkdir aws-ofi-nccl/lib
-    arch=$(uname -m)
-    curl -o ./aws-ofi-nccl/lib/libnccl-net.so https://jfrog.svc.cscs.ch/artifactory/aws-ofi-nccl-gen-dev/v1.9.2-aws-cf6f657/${arch}/SLES/15.5/cuda12/lib/libnccl-net.so
-    export PATH_PLUGIN=$(pwd)/aws-ofi-nccl
-
-    # Activate AWS NCCL plugin
-    export LD_LIBRARY_PATH=/opt/cray/libfabric/1.15.2.0/lib64/:$LD_LIBRARY_PATH
-    export LD_LIBRARY_PATH=$PATH_PLUGIN/lib/:$LD_LIBRARY_PATH
-    export LD_PRELOAD=$PATH_PLUGIN/lib/libnccl-net.so 
-    export CXI_FORK_SAFE="1"
-    export CXI_FORK_SAFE_HP="1"
-    export FI_CXI_DISABLE_CQ_HUGETLB="1"
-    export NCCL_CROSS_NIC="1"
-    export NCCL_DEBUG="Error"
-    export NCCL_NET_GDR_LEVEL="PHB"
-    export FI_CXI_DISABLE_HOST_REGISTER="1"
-    export FI_MR_CACHE_MONITOR="userfaultfd"
-
-    ld $LD_PRELOAD
-    if [[ $? -ne 0 ]]
-    then
-        echo "Job aborted!"
-        echo "Reason: unable to load aws-ofi-nccl plugin"
-        exit $?
-    fi
 
     EXCLUDE_ARG=""
     if [[ -s cordoned-nodes.txt ]]; then
