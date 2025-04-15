@@ -15,6 +15,8 @@ class ScontrolCommand:
    
    async def run(self):
        return_code, stdout, stderr = await self._execute()
+       if return_code != 0:
+          raise ValueError("Scontrol command return code is non zero.")
        return self._parse(stdout)
 
    def _parse(self, raw_command_output):

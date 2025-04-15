@@ -65,6 +65,9 @@ class NCCLEval(BaseEval):
             tensor = torch.rand(size//4, 1, dtype=torch.float32).cuda(local_rank)
             self.timed_allreduce(tensor,size,len(nodes))
 
+        
+        dist.destroy_process_group()
+        
         return True
     
 
@@ -79,7 +82,7 @@ class NCCLEval(BaseEval):
         end_event.record()
         torch.cuda.synchronize()
         duration = start_event.elapsed_time(end_event) / 1000
-
+        print(f"Duration: {start_event.elapsed_time(end_event)}")
         bandwith = size/duration * (2*(ranks - 1) / ranks)
         print(f" {conv_to_GBps(bandwith):6.2f}GBps")
         return True
