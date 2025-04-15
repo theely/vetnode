@@ -51,6 +51,9 @@ python -m vetnode setup ../examples/slurm-ml-vetting/config.yaml &>> ../results.
 # Run nodes vetting
 python -m vetnode diagnose ../examples/slurm-ml-vetting/config.yaml &>> ../results.txt
 
+#back to root folder
+cd ..
+
 # Extract node lists
 grep '^Cordon:' ./results.txt | awk '{print $2}' > ./cordoned-nodes.txt
 grep '^Vetted:' ./results.txt | awk '{print $2}' > ./vetted-nodes.txt
