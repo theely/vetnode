@@ -18,7 +18,7 @@ conv_to_GBps = lambda v : v/10**9
 class NCCLEval(BaseEval):
     name:str
     type: Literal["vetnode.evaluations.nccl_eval.NCCLEval"]
-    requirements: Literal[["torch --index-url https://download.pytorch.org/whl/cu126"]]
+    requirements: Literal[[['torch','--index-url','https://download.pytorch.org/whl/cu126'],"numpy"]]
     scheduler:  Literal["slurm","openPBS"]
 
     def verify(self)->bool:
