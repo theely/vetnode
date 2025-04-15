@@ -32,22 +32,24 @@ WORK_DIR="vetnode-$SLURM_JOB_ID"
 mkdir $WORK_DIR
 cd $WORK_DIR
 
-# Download example configuration
-curl -o config.yaml https://raw.githubusercontent.com/theely/vetnode/refs/heads/main/examples/slurm-ml-vetting/config.yaml
-touch "./results.txt"
+# Download vetnode source code
+git clone https://github.com/theely/vetnode.git $WORK_DIR
+touch "./$WORK_DIR/sanity-results.txt"
+cd $WORK_DIR
 
 python3.11 -m venv .venv
 source .venv/bin/activate
-pip install --no-cache-dir vetnode
+pip install --no-cache-dir -r ./requirements.txt
+cd src
 
 #Add CUDA
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/nvidia/hpc_sdk/Linux_aarch64/24.3/cuda/12.3/lib64/
 
 #Setup node vetting on main node
-vetnode setup ./config.yaml &>> ./results.txt
+python -m vetnode setup ./config.yaml &>> ./results.txt
 
 # Run nodes vetting
-srun vetnode diagnose ./config.yaml &>> ./results.txt
+python -m vetnode diagnose ./config.yaml &>> ./results.txt
 
 # Extract node lists
 grep '^Cordon:' ./results.txt | awk '{print $2}' > ./cordoned-nodes.txt
