@@ -11,7 +11,7 @@
 # Set the exact number of nodes required to run the job.
 # You can allocate (#SBATCH --nodes=xy) more nodes than 
 # required to account for non healthy ones. 
-REQUIRED_NODES=2
+REQUIRED_NODES=3
 
 # The application/command you would like to run on the
 # vetted nodes.
