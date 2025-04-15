@@ -4,6 +4,8 @@ import datetime
 import os
 from typing import Literal
 
+from pydantic import BaseModel
+
 
 from vetnode.commands.scontrol.scontrol_command import ScontrolCommand
 from vetnode.evaluations.base_eval import BaseEval
@@ -16,7 +18,7 @@ import torch.distributed as dist
 conv_to_GBps = lambda v : v/10**9
 
 
-class NCCLEvalWarmUp(BaseEval):
+class NCCLEvalWarmUp(BaseModel):
     size:int= 28
     runs:int= 3
 
