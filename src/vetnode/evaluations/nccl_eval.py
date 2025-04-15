@@ -13,13 +13,14 @@ import torch
 import torch.distributed as dist
 
 
-
+# https://stackoverflow.com/a/75332100/9201239
+fmt_bytes = lambda v : str(v >> ((max(v.bit_length()-1, 0)//10)*10)) +["", "K", "M", "G", "T", "P", "E"][max(v.bit_length()-1, 0)//10]+"iB"
 # following the common networking hw spec convention which uses base 10, instead of 2 for bps/Bps (it makes speed look bigger than it is)
 conv_to_GBps = lambda v : v/10**9
 
 
 class NCCLEvalWarmUp(BaseModel):
-    size:int= 28
+    payload:int= 28
     runs:int= 3
 
 class NCCLEval(BaseEval):
@@ -27,9 +28,9 @@ class NCCLEval(BaseEval):
     type: Literal["vetnode.evaluations.nccl_eval.NCCLEval"]
     requirements: Literal[[['torch','--index-url','https://download.pytorch.org/whl/cu126'],"numpy"]]
     scheduler:  Literal["slurm","openPBS"]
-    size: int = 32 #4GB  2**15 to 2**34 => 32KB to 16GB
+    payload: int = 32 #4GB  2**15 to 2**34 => 32KB to 16GB
     warmup: NCCLEvalWarmUp
-    min_bandwidth: int = 3 #GBps
+    min_bandwidth: int = 15000000000 #15 GBps
     def verify(self)->bool:
         return True
 
@@ -61,18 +62,18 @@ class NCCLEval(BaseEval):
         
         tensor = None
         # /4 is for 4 bytes in fp32
-        tensor = torch.rand((2**self.warmup.size)//4, 1, dtype=torch.float32).cuda(local_rank)
+        tensor = torch.rand((2**self.warmup.payload)//4, 1, dtype=torch.float32).cuda(local_rank)
         for i in range(self.warmup.runs):
-             self.timed_allreduce(local_rank,tensor,(2**self.warmup.size),len(nodes))
+             self.timed_allreduce(local_rank,tensor,(2**self.warmup.payload),len(nodes))
 
         # /4 is for 4 bytes in fp32
-        tensor = torch.rand((2**self.size)//4, 1, dtype=torch.float32).cuda(local_rank)
-        self.timed_allreduce(local_rank,tensor,(2**self.size),len(nodes))
+        tensor = torch.rand((2**self.payload)//4, 1, dtype=torch.float32).cuda(local_rank)
+        bandwith = self.timed_allreduce(local_rank,tensor,(2**self.payload),len(nodes))
 
         
         dist.destroy_process_group()
         
-        return True
+        return bandwith > self.min_bandwidth
     
 
     def timed_allreduce(self,local_rank,tensor,size,ranks):
@@ -86,11 +87,11 @@ class NCCLEval(BaseEval):
         end_event.record()
         torch.cuda.synchronize()
         duration = start_event.elapsed_time(end_event) / 1000
-        print(f"Size: {size}")
-        print(f"Duration: {start_event.elapsed_time(end_event)}")
-        bandwith = size/duration #* (2*(ranks - 1) / ranks)
-        print(f"bandwith: {bandwith}")
-        print(f" {conv_to_GBps(bandwith):6.2f}GBps")
-        return True
+        bandwith = size/duration
+        print(f"Payload: {fmt_bytes(size):>7}")
+        print(f"Algbw: {conv_to_GBps(bandwith):6.2f} GBps")
+        print(f"Busbw: {conv_to_GBps(bandwith * (2*(ranks - 1) / ranks)):6.2f} GBps")
+        
+        return bandwith * (2*(ranks - 1) / ranks)
 
         

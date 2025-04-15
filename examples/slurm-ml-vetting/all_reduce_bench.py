@@ -34,18 +34,13 @@ def timed_allreduce(local_rank,tensor, size, start_event, end_event):
     end_event.record()
     torch.cuda.synchronize()
     duration = start_event.elapsed_time(end_event) / 1000
-    print(f"Duration: {start_event.elapsed_time(end_event)}")
-    print(f"Size: {size}")
     n = dist.get_world_size()
-    print(f"bandwith: {size / duration}")
     # note that this is following the same math as NVIDIA/nccl-tests
     algbw = torch.tensor([size / duration]).cuda(local_rank)
 
     # calculate mean across all ranks
     dist.reduce(algbw, dst=0, op=dist.ReduceOp.SUM)
-    print(f"n: {n}")
     algbw /= n
-    print(f"algbw: {algbw}")
 
     return algbw
 
