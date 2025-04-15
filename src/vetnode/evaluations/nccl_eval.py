@@ -48,7 +48,7 @@ class NCCLEval(BaseEval):
             init_method="tcp://{}:{}".format(master_node, 6001),
             rank=local_rank,
             world_size=len(nodes),
-            device_id=local_rank
+            device_id=torch.device('cuda:0')
         )
 
         lower_limit = 32
