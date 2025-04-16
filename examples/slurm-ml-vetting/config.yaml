@@ -13,7 +13,7 @@ evals:
   type: vetnode.evaluations.nccl_eval.NCCLEval
   scheduler: slurm
   payload: 2 GB
-  method: broadcast
+  method: roundrobin
   min_bandwidth: 20 GB/s
   warmup:
     payload: 256 MB
