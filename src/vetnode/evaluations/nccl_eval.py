@@ -101,6 +101,10 @@ class NCCLEval(BaseEval):
         for i in range(ranks):
             for j in range(ranks):
 
+                # skip same proccess
+                if i==j: 
+                    continue
+
                 #All processes wait here    
                 dist.barrier(device_ids=[local_rank])
                 
