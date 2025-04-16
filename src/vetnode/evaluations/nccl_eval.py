@@ -71,8 +71,8 @@ class NCCLEval(BaseEval):
 
         # /4 is for 4 bytes in fp32
         tensor = torch.rand(self.payload//4, 1, dtype=torch.float32).cuda(local_rank)
-        bandwith = self.timed_allreduce(local_rank,tensor,self.payload,len(nodes))
-
+        #bandwith = self.timed_allreduce(local_rank,tensor,self.payload,len(nodes))
+        bandwith = self.timed_roundrobin(local_rank,tensor,self.payload,len(nodes))
         
         dist.destroy_process_group()
         
@@ -92,3 +92,31 @@ class NCCLEval(BaseEval):
         duration = start_event.elapsed_time(end_event) / 1000
         bandwith = size/duration        
         return bandwith * (2*(ranks - 1) / ranks)
+    
+
+    def timed_roundrobin(self,local_rank,tensor,size,ranks):
+        start_event = torch.cuda.Event(enable_timing=True)
+        end_event = torch.cuda.Event(enable_timing=True)
+
+        for i in range(ranks):
+            for j in range(ranks):
+
+                #All processes wait here    
+                dist.barrier(device_ids=[local_rank])
+                
+                if local_rank == i or local_rank == j:
+                    start_event.record()
+                    if local_rank == i:
+                        print(f"#{local_rank} -> sending")
+                        dist.send(tensor=tensor, dst=j)
+                    else:
+                        print(f"#{local_rank} -> receiving")
+                        dist.recv(tensor=tensor, src=i)
+                    end_event.record()
+                    torch.cuda.synchronize()
+                    duration = start_event.elapsed_time(end_event) / 1000
+                    bandwith = size/duration 
+                    print(f"From {i} to {j} bandwidth:{conv_to_GBps(bandwith):6.2f} GB/s")       
+                print(f"#{local_rank} completed")
+        return 0
+
