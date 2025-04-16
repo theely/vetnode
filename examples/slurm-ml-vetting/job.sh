@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --nodes=3
+#SBATCH --nodes=64
 #SBATCH --time=0-00:15:00
 #SBATCH --account=a-csstaff
 
@@ -11,7 +11,7 @@
 # Set the exact number of nodes required to run the job.
 # You can allocate (#SBATCH --nodes=xy) more nodes than 
 # required to account for non healthy ones. 
-REQUIRED_NODES=3
+REQUIRED_NODES=60
 
 # The application/command you would like to run on the
 # vetted nodes.

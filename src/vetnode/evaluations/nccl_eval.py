@@ -32,6 +32,7 @@ class NCCLEval(BaseEval):
     requirements: Literal[[['torch','--index-url','https://download.pytorch.org/whl/cu126'],"numpy"]]
     scheduler:  Literal["slurm","openPBS"]
     payload: BinaryByteSize = '4 GB'
+    method: Literal["broadcast","roundrobin","allreduce"] = "broadcast"
     warmup: NCCLEvalWarmUp
     min_bandwidth: BandwithSize = '15 GB/s'
     def verify(self)->bool:
@@ -71,10 +72,16 @@ class NCCLEval(BaseEval):
 
         # /4 is for 4 bytes in fp32
         tensor = torch.rand(self.payload//4, 1, dtype=torch.float32).cuda(local_rank)
-        #bandwith = self.timed_allreduce(local_rank,tensor,self.payload,len(nodes))
-        #bandwith = self.timed_roundrobin(local_rank,tensor,self.payload,len(nodes))
-        bandwith = self.timed_broadcast(local_rank,tensor,self.payload,len(nodes))
-
+        match self.method:
+            case "allreduce":
+                bandwith = self.timed_allreduce(local_rank,tensor,self.payload,len(nodes))
+            case "roundrobin":
+                bandwith = self.timed_roundrobin(local_rank,tensor,self.payload,len(nodes))
+            case "broadcast":
+                bandwith = self.timed_broadcast(local_rank,tensor,self.payload,len(nodes))
+            case _:
+                raise NotImplementedError("Bandwidth test method not implemented.")
+        
         dist.destroy_process_group()
         
         return bandwith > self.min_bandwidth, {"bandwith":f"{conv_to_GBps(bandwith):6.2f} GB/s"}
@@ -94,7 +101,6 @@ class NCCLEval(BaseEval):
         bandwith = size/duration        
         return bandwith * (2*(ranks - 1) / ranks)
     
-
     def timed_roundrobin(self,local_rank,tensor,size,ranks):
         start_event = torch.cuda.Event(enable_timing=True)
         end_event = torch.cuda.Event(enable_timing=True)
