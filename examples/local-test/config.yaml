@@ -6,7 +6,7 @@ evals:
   type: vetnode.evaluations.nccl_eval.NCCLEval
   scheduler: slurm
   payload: 4 GB
-  min_bandwidth: 15 GBs
+  min_bandwidth: 15 GBps
   warmup:
     payload: 256 MB
     runs: 3
