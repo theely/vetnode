@@ -36,11 +36,11 @@ class CUDAEval(BaseEval):
         libc = CDLL("libnvrtc.so.12")  # On Linux
         return libc is not None
 
-    async def check(self,executor)->bool:
+    async def check(self,executor)->tuple[bool,dict]:
         return await asyncio.get_event_loop().run_in_executor(executor, self._check)
 
 
-    def _check(self)->bool:
+    def _check(self)->tuple[bool,dict]:
 
         (err,) = cuda.cuInit(0)
         self.checkCudaErrors(err)
@@ -141,7 +141,7 @@ class CUDAEval(BaseEval):
         cuda.cuModuleUnload(module)
         cuda.cuCtxDestroy(context)
 
-        return True
+        return True,None
 
     def checkCudaErrors(self, err):
         if err != cuda.CUresult.CUDA_SUCCESS:

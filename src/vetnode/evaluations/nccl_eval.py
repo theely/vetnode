@@ -2,7 +2,7 @@
 import asyncio
 import datetime
 import os
-from typing import Literal
+from typing import Dict, Literal
 
 from pydantic import BaseModel
 
@@ -41,7 +41,7 @@ class NCCLEval(BaseEval):
         return await asyncio.get_event_loop().run_in_executor(executor, self._check)
 
 
-    def _check(self)->bool:
+    def _check(self)->tuple[bool,dict]:
 
         local_rank = None
         nodes = None
@@ -76,7 +76,7 @@ class NCCLEval(BaseEval):
         
         dist.destroy_process_group()
         
-        return bandwith > self.min_bandwidth
+        return bandwith > self.min_bandwidth, {"bandwith":f"{conv_to_GBps(bandwith):6.2f}"}
     
 
     def timed_allreduce(self,local_rank,tensor,size,ranks):

@@ -11,7 +11,7 @@ class InternetAccessEval(BaseEval):
     port:Optional[int]=53
     timeout:Optional[int]=3
 
-    async def check(self,executor)->bool:
+    async def check(self,executor)->tuple[bool,dict]:
         socket.setdefaulttimeout(self.timeout)
         socket.socket(socket.AF_INET, socket.SOCK_STREAM).connect((self.host, self.port))
-        return True
+        return True, None

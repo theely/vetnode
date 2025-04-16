@@ -9,5 +9,5 @@ class RandomEval(BaseEval):
     name:str
     type: Literal["vetnode.evaluations.random.RandomEval"]
 
-    async def check(self,executor)->bool:
-        return await asyncio.get_event_loop().run_in_executor(executor, random.choice, [True, False] )
+    async def check(self,executor)->tuple[bool,dict]:
+        return await asyncio.get_event_loop().run_in_executor(executor, random.choice, [True, False] ), None

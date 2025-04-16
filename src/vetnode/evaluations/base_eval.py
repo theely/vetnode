@@ -16,15 +16,15 @@ class BaseEval(EvalConfiguration):
         return True
     
     @abstractmethod
-    async def check(self, executor:ThreadPoolExecutor)->bool:
+    async def check(self, executor:ThreadPoolExecutor)->tuple[bool,dict]:
         pass
     
     async def eval(self)->Evaluation:
-        result:Evaluation = Evaluation(**{"test_name":self.name, "test_type": self.type, "elapsedtime":0, "passed":False})
+        result:Evaluation = Evaluation(**{"test_name":self.name, "test_type": self.type, "elapsedtime":0, "passed":False, "metadata":None})
         
         async with asyncio.timeout(TIMEOUT):
             start_time = time.time()
-            result.passed = await self.check(_POOL)
+            result.passed, result.metadata = await self.check(_POOL)
             end_time = time.time()
             result.elapsedtime = end_time-start_time
         return result

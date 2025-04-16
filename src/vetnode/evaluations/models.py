@@ -2,7 +2,7 @@
 
 
 import re
-from typing import List, Optional
+from typing import Dict, List, Optional
 from pydantic import BaseModel, ByteSize
 
 class EvalConfiguration(BaseModel, extra='allow'):
@@ -15,6 +15,7 @@ class Evaluation(BaseModel):
    test_type:str
    passed:bool
    elapsedtime:int
+   metadata:Optional[Dict[str,str]]=None
 
 
 class BinaryByteSize(ByteSize):
