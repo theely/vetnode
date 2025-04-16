@@ -29,11 +29,11 @@ class BinaryByteSize(ByteSize):
 
 class BandwithSize(ByteSize):
     byte_sizes = {
-        'b/s': 1,
-        'kb/s': 2**10,
-        'mb/s': 2**20,
-        'gb/s': 2**30,
-        'tb/s': 2**40,
-        'pb/s': 2**50,
-        'eb/s': 2**60,
+        'bs': 1,
+        'kbs': 2**10,
+        'mbs': 2**20,
+        'gbs': 2**30,
+        'tbs': 2**40,
+        'pbs': 2**50,
+        'ebs': 2**60,
     }

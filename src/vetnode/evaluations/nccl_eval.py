@@ -33,7 +33,7 @@ class NCCLEval(BaseEval):
     scheduler:  Literal["slurm","openPBS"]
     payload: BinaryByteSize = '4 GB'
     warmup: NCCLEvalWarmUp
-    min_bandwidth: BandwithSize = '15 GB/s'
+    min_bandwidth: BandwithSize = '15 GBs'
     def verify(self)->bool:
         return True
 
