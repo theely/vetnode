@@ -29,11 +29,12 @@ class BinaryByteSize(ByteSize):
 
 class BandwithSize(ByteSize):
     byte_sizes = {
-        'bps': 1,
-        'kbps': 2**10,
-        'mbps': 2**20,
-        'gbps': 2**30,
-        'tbps': 2**40,
-        'pbps': 2**50,
-        'ebps': 2**60,
+        'b/s': 1,
+        'kb/s': 2**10,
+        'mb/s': 2**20,
+        'gb/s': 2**30,
+        'tb/s': 2**40,
+        'pb/s': 2**50,
+        'eb/s': 2**60,
     }
+    byte_string_pattern = r'^\s*(\d*\.?\d+)\s*([\w\/]+)?'
