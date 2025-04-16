@@ -1,6 +1,7 @@
 
 
 
+import re
 from typing import List, Optional
 from pydantic import BaseModel, ByteSize
 
@@ -38,3 +39,4 @@ class BandwithSize(ByteSize):
         'eb/s': 2**60,
     }
     byte_string_pattern = r'^\s*(\d*\.?\d+)\s*([\w\/]+)?'
+    byte_string_re = re.compile(byte_string_pattern, re.IGNORECASE)
