@@ -70,8 +70,6 @@ class NCCLEval(BaseEval):
              self.timed_allreduce(local_rank,tensor,self.warmup.payload,len(nodes))
 
         # /4 is for 4 bytes in fp32
-        print(f"size expected: {2**32}")
-        print(f"size got: {self.payload}")
         tensor = torch.rand(self.payload//4, 1, dtype=torch.float32).cuda(local_rank)
         bandwith = self.timed_allreduce(local_rank,tensor,self.payload,len(nodes))
 
