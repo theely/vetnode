@@ -42,12 +42,14 @@ class NCCLEval(BaseEval):
 
     def _check(self)->tuple[bool,dict]:
 
-        local_rank = None
+        #only uses GPU 0 - this could be randomized or all GPUs could be tested.
+        local_rank = 0
+        rank=0
         nodes = None
         master_node = None
         match self.scheduler:
             case "slurm":
-                local_rank = int(os.environ["SLURM_PROCID"])
+                rank = int(os.environ["SLURM_PROCID"])
                 nodes = asyncio.run(ScontrolCommand().run()).hostnames
                 master_node = nodes[0]
             case _:
@@ -57,7 +59,7 @@ class NCCLEval(BaseEval):
             backend="nccl",
             init_method="tcp://{}:{}".format(master_node, 6001),
             timeout=datetime.timedelta(seconds=5),
-            rank=local_rank,
+            rank=rank,
             world_size=len(nodes),
         )
         torch.cuda.set_device(local_rank)
@@ -66,17 +68,17 @@ class NCCLEval(BaseEval):
         # /4 is for 4 bytes in fp32
         tensor = torch.rand(self.warmup.payload//4, 1, dtype=torch.float32).cuda(local_rank)
         for i in range(self.warmup.runs):
-             self.timed_allreduce(local_rank,tensor,self.warmup.payload,len(nodes))
+             self.timed_allreduce(local_rank,rank,tensor,self.warmup.payload,len(nodes))
 
         # /4 is for 4 bytes in fp32
         tensor = torch.rand(self.payload//4, 1, dtype=torch.float32).cuda(local_rank)
         match self.method:
             case "allreduce":
-                bandwith = self.timed_allreduce(local_rank,tensor,self.payload,len(nodes))
+                bandwith = self.timed_allreduce(local_rank,rank,tensor,self.payload,len(nodes))
             case "roundrobin":
-                bandwith = self.timed_roundrobin(local_rank,tensor,self.payload,len(nodes))
+                bandwith = self.timed_roundrobin(local_rank,rank,tensor,self.payload,len(nodes))
             case "broadcast":
-                bandwith = self.timed_broadcast(local_rank,tensor,self.payload,len(nodes))
+                bandwith = self.timed_broadcast(local_rank,rank,tensor,self.payload,len(nodes))
             case _:
                 raise NotImplementedError("Bandwidth test method not implemented.")
         
@@ -85,7 +87,7 @@ class NCCLEval(BaseEval):
         return bandwith > self.min_bandwidth, {"bandwith":f"{conv_to_GBps(bandwith):6.2f} GB/s"}
     
 
-    def timed_allreduce(self,local_rank,tensor,size,ranks):
+    def timed_allreduce(self,local_rank,rank,tensor,size,ranks):
         
         start_event = torch.cuda.Event(enable_timing=True)
         end_event = torch.cuda.Event(enable_timing=True)
@@ -99,7 +101,7 @@ class NCCLEval(BaseEval):
         bandwith = size/duration        
         return bandwith * (2*(ranks - 1) / ranks)
     
-    def timed_roundrobin(self,local_rank,tensor,size,ranks):
+    def timed_roundrobin(self,local_rank,rank,tensor,size,ranks):
         start_event = torch.cuda.Event(enable_timing=True)
         end_event = torch.cuda.Event(enable_timing=True)
         measurments = np.array([])
@@ -109,20 +111,20 @@ class NCCLEval(BaseEval):
                 #All processes wait here    
                 dist.barrier(device_ids=[local_rank])
                 
-                if local_rank == i or local_rank == j:
+                if rank == i or rank == j:
                     start_event.record()
-                    if local_rank == i:
+                    if rank == i:
                         dist.send(tensor=tensor, dst=j)
                     else:
                         dist.recv(tensor=tensor, src=i)
                     end_event.record()
                     torch.cuda.synchronize()
                     duration = start_event.elapsed_time(end_event) / 1000
-                    if local_rank == i:
+                    if rank == i:
                         measurments = np.append(measurments, size/duration )     
         return np.mean(measurments) 
 
-    def timed_broadcast(self,local_rank,tensor,size,ranks):
+    def timed_broadcast(self,local_rank,rank,tensor,size,ranks):
         start_event = torch.cuda.Event(enable_timing=True)
         end_event = torch.cuda.Event(enable_timing=True)
         bandwidth = 0
@@ -134,7 +136,7 @@ class NCCLEval(BaseEval):
                 end_event.record()
                 torch.cuda.synchronize()
                 duration = start_event.elapsed_time(end_event) / 1000
-                if local_rank == i:
+                if rank == i:
                     bandwidth= size/duration  
         return bandwidth 
 
