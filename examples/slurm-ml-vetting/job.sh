@@ -77,10 +77,10 @@ fi
 cd src
 
 #Setup node vetting on main node
-python -m vetnode setup ../examples/slurm-ml-vetting/config-roundrobin.yaml &>> ../results.txt
+python -m vetnode setup ../examples/slurm-ml-vetting/config-allreduce.yaml &>> ../results.txt
 
 # Run nodes vetting
-srun python -m vetnode diagnose ../examples/slurm-ml-vetting/config-roundrobin.yaml &>> ../results.txt
+srun python -m vetnode diagnose ../examples/slurm-ml-vetting/config-allreduce.yaml &>> ../results.txt
 
 #back to root folder
 cd ..
