@@ -76,7 +76,7 @@ class NCCLEval(BaseEval):
         
         dist.destroy_process_group()
         
-        return bandwith > self.min_bandwidth, {"bandwith":f"{conv_to_GBps(bandwith):6.2f}"}
+        return bandwith > self.min_bandwidth, {"bandwith":f"{conv_to_GBps(bandwith):6.2f} GB/s"}
     
 
     def timed_allreduce(self,local_rank,tensor,size,ranks):
@@ -90,9 +90,5 @@ class NCCLEval(BaseEval):
         end_event.record()
         torch.cuda.synchronize()
         duration = start_event.elapsed_time(end_event) / 1000
-        bandwith = size/duration
-        print(f"Payload: {fmt_bytes(size):>7}")
-        print(f"Algbw: {conv_to_GBps(bandwith):6.2f} GBps")
-        print(f"Busbw: {conv_to_GBps(bandwith * (2*(ranks - 1) / ranks)):6.2f} GBps")
-        
+        bandwith = size/duration        
         return bandwith * (2*(ranks - 1) / ranks)
