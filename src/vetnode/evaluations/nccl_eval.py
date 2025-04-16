@@ -72,8 +72,9 @@ class NCCLEval(BaseEval):
         # /4 is for 4 bytes in fp32
         tensor = torch.rand(self.payload//4, 1, dtype=torch.float32).cuda(local_rank)
         #bandwith = self.timed_allreduce(local_rank,tensor,self.payload,len(nodes))
-        bandwith = self.timed_roundrobin(local_rank,tensor,self.payload,len(nodes))
-        
+        #bandwith = self.timed_roundrobin(local_rank,tensor,self.payload,len(nodes))
+        bandwith = self.timed_broadcast(local_rank,tensor,self.payload,len(nodes))
+
         dist.destroy_process_group()
         
         return bandwith > self.min_bandwidth, {"bandwith":f"{conv_to_GBps(bandwith):6.2f} GB/s"}
@@ -116,4 +117,21 @@ class NCCLEval(BaseEval):
                     if local_rank == i:
                         measurments = np.append(measurments, size/duration )     
         return np.mean(measurments) 
+
+    def timed_broadcast(self,local_rank,tensor,size,ranks):
+        start_event = torch.cuda.Event(enable_timing=True)
+        end_event = torch.cuda.Event(enable_timing=True)
+        bandwidth = 0
+        for i in range(ranks):
+                #All processes wait here    
+                dist.barrier(device_ids=[local_rank])
+                start_event.record()
+                dist.broadcast(tensor, i)
+                end_event.record()
+                torch.cuda.synchronize()
+                duration = start_event.elapsed_time(end_event) / 1000
+                if local_rank == i:
+                    bandwidth= size/duration  
+        return bandwidth 
+
 
