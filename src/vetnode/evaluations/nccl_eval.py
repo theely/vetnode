@@ -11,6 +11,7 @@ from vetnode.commands.scontrol.scontrol_command import ScontrolCommand
 from vetnode.evaluations.base_eval import BaseEval
 import torch
 import torch.distributed as dist
+from vetnode.evaluations.models import BandwithSize, BinaryByteSize
 
 
 # https://stackoverflow.com/a/75332100/9201239
@@ -19,8 +20,10 @@ fmt_bytes = lambda v : str(v >> ((max(v.bit_length()-1, 0)//10)*10)) +["", "K", 
 conv_to_GBps = lambda v : v/10**9
 
 
+
+
 class NCCLEvalWarmUp(BaseModel):
-    payload:ByteSize= '256MB'
+    payload:BinaryByteSize= '256 MB'
     runs:int= 3
 
 class NCCLEval(BaseEval):
@@ -28,9 +31,9 @@ class NCCLEval(BaseEval):
     type: Literal["vetnode.evaluations.nccl_eval.NCCLEval"]
     requirements: Literal[[['torch','--index-url','https://download.pytorch.org/whl/cu126'],"numpy"]]
     scheduler:  Literal["slurm","openPBS"]
-    payload: ByteSize = '4GB'
+    payload: BinaryByteSize = '4 GB'
     warmup: NCCLEvalWarmUp
-    min_bandwidth: ByteSize = '15gbit'
+    min_bandwidth: BandwithSize = '15 Gbps'
     def verify(self)->bool:
         return True
 
@@ -62,13 +65,13 @@ class NCCLEval(BaseEval):
         
         tensor = None
         # /4 is for 4 bytes in fp32
-        print(f"size expected: {2**32}")
-        print(f"size got: {self.warmup.payload}")
         tensor = torch.rand(self.warmup.payload//4, 1, dtype=torch.float32).cuda(local_rank)
         for i in range(self.warmup.runs):
              self.timed_allreduce(local_rank,tensor,self.warmup.payload,len(nodes))
 
         # /4 is for 4 bytes in fp32
+        print(f"size expected: {2**32}")
+        print(f"size got: {self.payload}")
         tensor = torch.rand(self.payload//4, 1, dtype=torch.float32).cuda(local_rank)
         bandwith = self.timed_allreduce(local_rank,tensor,self.payload,len(nodes))
 
@@ -91,9 +94,7 @@ class NCCLEval(BaseEval):
         duration = start_event.elapsed_time(end_event) / 1000
         bandwith = size/duration
         print(f"Payload: {fmt_bytes(size):>7}")
-        print(f"Algbw: {conv_to_GBps(bandwith):6.2f} GBps")
-        print(f"Busbw: {conv_to_GBps(bandwith * (2*(ranks - 1) / ranks)):6.2f} GBps")
+        print(f"Algbw: {conv_to_GBps(bandwith*8):6.2f} GBps")
+        print(f"Busbw: {conv_to_GBps(bandwith * (2*(ranks - 1) / ranks) * 8):6.2f} GBps")
         
-        return bandwith * (2*(ranks - 1) / ranks)
-
-        
+        return bandwith * (2*(ranks - 1) / ranks) * 8
