@@ -42,16 +42,18 @@ class NCCLEval(BaseEval):
 
     def _check(self)->tuple[bool,dict]:
 
-        #only uses GPU 0 - this could be randomized or all GPUs could be tested.
-        local_rank = 0
-        rank=0
+        local_rank =None
+        rank= None
         nodes = None
         master_node = None
+        world_size =None
         match self.scheduler:
             case "slurm":
                 rank = int(os.environ["SLURM_PROCID"])
+                local_rank = int(os.environ["SLURM_LOCALID"])
                 nodes = asyncio.run(ScontrolCommand().run()).hostnames
                 master_node = nodes[0]
+                world_size = int(os.environ['SLURM_NTASKS'])
             case _:
                 raise NotImplementedError("Support for the rquested scheduler has not been implemented.")
 
@@ -60,7 +62,7 @@ class NCCLEval(BaseEval):
             init_method="tcp://{}:{}".format(master_node, 6001),
             timeout=datetime.timedelta(seconds=5),
             rank=rank,
-            world_size=len(nodes),
+            world_size=world_size,
         )
         torch.cuda.set_device(local_rank)
         
@@ -68,23 +70,23 @@ class NCCLEval(BaseEval):
         # /4 is for 4 bytes in fp32
         tensor = torch.rand(self.warmup.payload//4, 1, dtype=torch.float32).cuda(local_rank)
         for i in range(self.warmup.runs):
-             self.timed_allreduce(local_rank,rank,tensor,self.warmup.payload,len(nodes))
+             self.timed_allreduce(local_rank,rank,tensor,self.warmup.payload,world_size)
 
         # /4 is for 4 bytes in fp32
         tensor = torch.rand(self.payload//4, 1, dtype=torch.float32).cuda(local_rank)
         match self.method:
             case "allreduce":
-                bandwith = self.timed_allreduce(local_rank,rank,tensor,self.payload,len(nodes))
+                bandwith = self.timed_allreduce(local_rank,rank,tensor,self.payload,world_size)
             case "roundrobin":
-                bandwith = self.timed_roundrobin(local_rank,rank,tensor,self.payload,len(nodes))
+                bandwith = self.timed_roundrobin(local_rank,rank,tensor,self.payload,world_size)
             case "broadcast":
-                bandwith = self.timed_broadcast(local_rank,rank,tensor,self.payload,len(nodes))
+                bandwith = self.timed_broadcast(local_rank,rank,tensor,self.payload,world_size)
             case _:
                 raise NotImplementedError("Bandwidth test method not implemented.")
         
         dist.destroy_process_group()
         
-        return bandwith > self.min_bandwidth, {"bandwith":f"{conv_to_GBps(bandwith):6.2f} GB/s"}
+        return bandwith > self.min_bandwidth, {"bandwith":f"{conv_to_GBps(bandwith):6.2f} GB/s", "rank":rank, "local_rank":local_rank, "world_size":world_size}
     
 
     def timed_allreduce(self,local_rank,rank,tensor,size,ranks):
