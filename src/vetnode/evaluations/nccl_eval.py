@@ -4,7 +4,7 @@ import datetime
 import os
 from typing import Literal
 
-from pydantic import BaseModel, ByteSize
+from pydantic import BaseModel
 
 
 from vetnode.commands.scontrol.scontrol_command import ScontrolCommand
@@ -33,7 +33,7 @@ class NCCLEval(BaseEval):
     scheduler:  Literal["slurm","openPBS"]
     payload: BinaryByteSize = '4 GB'
     warmup: NCCLEvalWarmUp
-    min_bandwidth: BandwithSize = '15 Gbps'
+    min_bandwidth: BandwithSize = '15 GB/s'
     def verify(self)->bool:
         return True
 
@@ -92,7 +92,7 @@ class NCCLEval(BaseEval):
         duration = start_event.elapsed_time(end_event) / 1000
         bandwith = size/duration
         print(f"Payload: {fmt_bytes(size):>7}")
-        print(f"Algbw: {conv_to_GBps(bandwith*8):6.2f} GBps")
-        print(f"Busbw: {conv_to_GBps(bandwith * (2*(ranks - 1) / ranks) * 8):6.2f} GBps")
+        print(f"Algbw: {conv_to_GBps(bandwith):6.2f} GBps")
+        print(f"Busbw: {conv_to_GBps(bandwith * (2*(ranks - 1) / ranks)):6.2f} GBps")
         
-        return bandwith * (2*(ranks - 1) / ranks) * 8
+        return bandwith * (2*(ranks - 1) / ranks)
