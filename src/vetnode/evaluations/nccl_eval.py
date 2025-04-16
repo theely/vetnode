@@ -2,7 +2,7 @@
 import asyncio
 import datetime
 import os
-from typing import Dict, Literal
+from typing import Literal
 import numpy as np 
 from pydantic import BaseModel
 
@@ -14,8 +14,6 @@ import torch.distributed as dist
 from vetnode.evaluations.models import BandwithSize, BinaryByteSize
 
 
-# https://stackoverflow.com/a/75332100/9201239
-fmt_bytes = lambda v : str(v >> ((max(v.bit_length()-1, 0)//10)*10)) +["", "K", "M", "G", "T", "P", "E"][max(v.bit_length()-1, 0)//10]+"iB"
 # following the common networking hw spec convention which uses base 10, instead of 2 for bps/Bps (it makes speed look bigger than it is)
 conv_to_GBps = lambda v : v/10**9
 
