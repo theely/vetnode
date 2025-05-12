@@ -55,10 +55,8 @@ export FI_MR_CACHE_MONITOR="userfaultfd"
 cd src
 
 #Setup node vetting on main node
-python -m vetnode  setup ./config.yaml
+python -m vetnode  setup ../examples/local-test/config.yaml
 
 # Run nodes vetting
-srun python -m vetnode  diagnose ./config.yaml
-# Download vetnode source code
-git clone https://github.com/theely/vetnode.git $WORK_DIR
-touch "./$WORK_DIR/sanity-results.txt"
+srun python -m vetnode  diagnose ../examples/local-test/config.yaml
+
