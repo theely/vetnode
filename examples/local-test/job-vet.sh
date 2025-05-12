@@ -52,12 +52,13 @@ export NCCL_NET_GDR_LEVEL="PHB"
 export FI_CXI_DISABLE_HOST_REGISTER="1"
 export FI_MR_CACHE_MONITOR="userfaultfd"
 
+cd src
 
 #Setup node vetting on main node
-vetnode setup ./config.yaml
+python -m vetnode  setup ./config.yaml
 
 # Run nodes vetting
-srun vetnode diagnose ./config.yaml
+srun python -m vetnode  diagnose ./config.yaml
 # Download vetnode source code
 git clone https://github.com/theely/vetnode.git $WORK_DIR
 touch "./$WORK_DIR/sanity-results.txt"
