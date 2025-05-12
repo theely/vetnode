@@ -82,7 +82,7 @@ class CUDANCCLEval(BaseEval):
         uid = ncclUniqueId_t()
         if rank==0:
             nccl.ncclGetUniqueId(ctypes.byref(uid))
-            
+            print(f"Generated uid: {base64.b64encode(bytes(uid))}")
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.bind(('0.0.0.0', 13333))
                 s.listen()
