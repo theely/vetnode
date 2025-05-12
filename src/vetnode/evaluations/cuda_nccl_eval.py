@@ -23,7 +23,7 @@ class NCCLEvalWarmUp(BaseModel):
 
 class CUDANCCLEval(BaseEval):
     name:str
-    type: Literal["vetnode.evaluations.nccl_eval.CUDANCCLEval"]
+    type: Literal["vetnode.evaluations.cuda_nccl_eval.CUDANCCLEval"]
     requirements: Literal[["cuda-python"]]
     scheduler:  Literal["slurm"]
     payload: BinaryByteSize = '4 GB'
