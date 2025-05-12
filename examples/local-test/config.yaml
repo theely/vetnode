@@ -1,11 +1,11 @@
 name: Local Node Vetting
 evals:
-- name: Random
-  type: vetnode.evaluations.random.RandomEval
-- name: Check GPU
-  type: vetnode.evaluations.gpu_eval.GPUEval
-  max_temp:  30
-  max_used_memory: 0.2
+#- name: Random
+#  type: vetnode.evaluations.random.RandomEval
+#- name: Check GPU
+#  type: vetnode.evaluations.gpu_eval.GPUEval
+#  max_temp:  30
+#  max_used_memory: 0.2
 - name: CUDANCCLEval
   type: vetnode.evaluations.cuda_nccl_eval.CUDANCCLEval
   scheduler: slurm

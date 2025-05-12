@@ -1,6 +1,7 @@
 
 import asyncio
 import base64
+from datetime import time
 import os
 from typing import Literal
 from pydantic import BaseModel
@@ -88,10 +89,17 @@ class CUDANCCLEval(BaseEval):
                     with conn:
                         conn.send(uid)
         else:
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                s.connect((master_node, 13333))
-                s.recv_into(uid)
-
+            for i in range(5):
+                try:
+                    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                        s.connect((master_node, 13333))
+                        s.recv_into(uid)
+                        break
+                except socket.error:
+                    print 
+                    print(f"Connection to {master_node} failed, retrying..")
+                    time.sleep(2)
+                
         print(f"[Rank {rank}] received uid: {base64.b64encode(bytes(uid))}")
 
         comm = ncclComm_t()
