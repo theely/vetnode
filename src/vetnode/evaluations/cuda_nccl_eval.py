@@ -54,8 +54,9 @@ class CUDANCCLEval(BaseEval):
             case "slurm":
                 rank = int(os.environ["SLURM_PROCID"])
                 local_rank = int(os.environ["SLURM_LOCALID"])
-                nodes = asyncio.run(ScontrolCommand().run()).hostnames
-                master_node = nodes[0]
+                #nodes = asyncio.run(ScontrolCommand().run()).hostnames
+                #master_node = nodes[0]
+                master_node='localhost'
                 world_size = int(os.environ['SLURM_NTASKS'])
             case _:
                 raise NotImplementedError("Support for the rquested scheduler has not been implemented.")
