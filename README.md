@@ -197,6 +197,13 @@ export LD_LIBRARY_PATH=/opt/nvidia/hpc_sdk/Linux_aarch64/24.3/cuda/12.3/lib64/:$
 ld /users/palmee/aws-ofi-nccl/install_2/lib/libnccl-net.so 
 
 
+## Install NCCL
+
+git clone https://github.com/NVIDIA/nccl.git
+git checkout v2.20.3-1  #looks like this is the version compatible with cuda/12.3/
+cd nccl
+make src.build CUDA_HOME=/opt/nvidia/hpc_sdk/Linux_aarch64/24.3/cuda/12.3/
+
 
 
 ## WORKING LIB (job 327119)
