@@ -37,6 +37,7 @@ def diagnose(config) -> None:
         click.echo(f"Vetted: {hostname}")
     else:
         click.echo(f"Cordon: {hostname}")
+        sys.exit(1)
 
 @click.command()
 @click.argument("config", type=click.Path(exists=True))
