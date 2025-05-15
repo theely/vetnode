@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --nodes=8
+#SBATCH --nodes=6
 #SBATCH --time=0-00:15:00
 #SBATCH --account=a-csstaff
 
@@ -80,7 +80,7 @@ cd src
 python -m vetnode setup ../examples/slurm-ml-vetting/config.yaml &>> ../results.txt
 
 # Run nodes vetting
-srun python -m vetnode diagnose ../examples/slurm-ml-vetting/config.yaml &>> ../results.txt
+srun --nodes=6 --tasks-per-node=1 python -m vetnode diagnose ../examples/slurm-ml-vetting/config.yaml &>> ../results.txt
 
 #back to root folder
 cd ..
