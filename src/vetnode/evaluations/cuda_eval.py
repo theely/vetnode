@@ -36,7 +36,7 @@ class CUDAEval(BaseEval):
 
     def verify(self)->bool:
         libc = CDLL(f"{self.cuda_home}/libnvrtc.so")
-        if libc is not None:
+        if libc is None:
             return False
         for filename in os.listdir(self.cuda_home):
             if filename.endswith(".so"):
