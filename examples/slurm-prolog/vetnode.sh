@@ -7,40 +7,49 @@ if [[ "${SLURM_JOB_CONSTRAINTS}x" =~ "vetnode" ]]; then
     # Initialize
     . /etc/slurm/utils/kafka_logger
     export PYTHONDONTWRITEBYTECODE=1
-    # Clariden
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/nvidia/hpc_sdk/Linux_aarch64/24.3/cuda/12.3/lib64/
-    # Zinal 
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/nvidia/hpc_sdk/Linux_x86_64/22.3/cuda/lib64/
-    
-    # Search vetnode installation
-    
-    #TODO: replace vetnode intallation locations with a common cscs path
-    LOCATIONS=(
-        "/capstor/scratch/cscs/palmee/vetnode/"
-        "/scratch/shared/users/palmee/vetnode/"
-    )
 
-    VETNODE_DIR=""
+    VETNODE_HOME=$(echo "${SLURM_JOB_COMMENT}" | grep -oP 'VETNODE_HOME=\S+' | cut -d= -f2)
+    VETNODE_CONFIGURATION=$(echo "${SLURM_JOB_COMMENT}" | grep -oP 'VETNODE_CONFIGURATION=\S+' | cut -d= -f2)
 
-    for folder in "${LOCATIONS[@]}"; do
-        if [ -d "$folder" ]; then
-            VETNODE_DIR="$folder"
-            break
-        fi
-    done
+    # Verify configuration can be loaded
+    if [ ! -f "${VETNODE_CONFIGURATION}" ]; then
+        reason="Vetnode configuration not found!"
+        echo "$reason"
+        publish_error "Node $(hostname) will skip node vetting with reason: ${reason}" "prolog"
+        exit 0
+    fi
 
-    if [ -z "${VETNODE_DIR}" ]; then
-        reason="Unable to find Vetnode installation"
+    # Verify vetnode installation is present
+    if [ -z "${VETNODE_HOME}" ]; then
+        reason="Unable to find Vetnode installation!"
+        echo "$reason"
+        publish_error "Node $(hostname) will skip node vetting with reason: ${reason}" "prolog"
+        exit 0
+    fi
+
+    #Search for CUDA installation
+    CUDA_HOME=$(dirname $(find /opt/nvidia/hpc_sdk/ -name "libnvrtc.so" | grep -e "cuda/12.3" -e "cuda/11.6" |  head -n 1))
+    if [ ! -d "$CUDA_HOME" ]; then
+        reason="unable to find CUDA installation path"
         echo "$reason"
         publish_error "Node $(hostname) will not be allocated with reason: ${reason}" "prolog"
         exit 1
     fi
+    
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CUDA_HOME
+
 
     # Run Vetnode
-    source $VETNODE_DIR/.venv/bin/activate
-    vetnode diagnose $VETNODE_DIR/config.yaml
+    source $VETNODE_HOME/.venv/bin/activate
+    timeout 10s vetnode diagnose ${VETNODE_CONFIGURATION}
 
     rc=$?
+    if [ $rc == 124 ]; then
+        reason="Vetnode diagnose did timeout"
+        echo "$reason"
+        publish_error "Node $(hostname) will not be allocated with reason: ${reason}" "prolog"
+        exit 1
+    fi
     if [ $rc != 0 ]; then
         reason="Vetnode tests failed"
         echo "$reason"
