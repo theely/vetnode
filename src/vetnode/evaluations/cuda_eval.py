@@ -40,8 +40,8 @@ class CUDAEval(BaseEval):
             return False
         for filename in os.listdir(self.cuda_home):
             if filename.endswith(".so"):
-                file_path = os.path.join(self.cuda_home, filename)
-                print(file_path)
+                lib_path = os.path.join(self.cuda_home, filename)
+                CDLL(f"{lib_path}")
         return True
 
 
