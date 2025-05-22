@@ -13,9 +13,7 @@ def load_template(file: str):
     return impresources.files(nvidiasmi) / file
     
 
-@pytest.fixture(scope="module")
-def nvidia_smi_log():
-    return load_cmd_output("nvidia-smi-log.txt")
+nvidia_smi_logs = [load_cmd_output("nvidia-smi-log-GH200.txt"),load_cmd_output("nvidia-smi-log-A100.txt")]
 
 @pytest.fixture(scope="module")
 def nvidia_smi_template():
@@ -29,7 +27,7 @@ def scontrol_log():
 def scontrol_template():
     return impresources.files(scontrol) /"scontrol-hostnames.tfsm"
 
-
+@pytest.mark.parametrize('nvidia_smi_log', nvidia_smi_logs)
 def test_nvidia_smi_log(nvidia_smi_log,nvidia_smi_template):
    
     with open(nvidia_smi_template) as template, open(nvidia_smi_log) as output:
@@ -39,7 +37,7 @@ def test_nvidia_smi_log(nvidia_smi_log,nvidia_smi_template):
         assert (len(data)== 4)
         assert (data[0][0]== '00000009:01:00.0')
         assert (data[0][1]== '1')
-        assert (data[0][2]== 'NVIDIA GH200 120GB')
+        assert (data[0][2]== 'NVIDIA GH200 120GB' or data[0][2]== 'NVIDIA A100-SXM4-80GB')
         assert (data[0][3]== '23')
         assert (data[0][4]== '97871')
         assert (data[0][5]== '284')
