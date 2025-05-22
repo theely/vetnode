@@ -60,7 +60,7 @@ class NCCLEval(BaseEval):
         dist.init_process_group(
             backend="nccl",
             init_method="tcp://{}:{}".format(master_node, 6001),
-            timeout=datetime.timedelta(seconds=5),
+            timeout=datetime.timedelta(seconds=30),
             rank=rank,
             world_size=world_size,
         )
@@ -74,11 +74,12 @@ class NCCLEval(BaseEval):
 
         # /4 is for 4 bytes in fp32
         tensor = torch.rand(self.payload//4, 1, dtype=torch.float32).cuda(local_rank)
+        mesurment_matrix = []
         match self.method:
             case "allreduce":
                 bandwith = self.timed_allreduce(local_rank,rank,tensor,self.payload,world_size)
             case "roundrobin":
-                bandwith = self.timed_roundrobin(local_rank,rank,tensor,self.payload,world_size)
+                bandwith,mesurment_matrix = self.timed_roundrobin(local_rank,rank,tensor,self.payload,world_size)
             case "broadcast":
                 bandwith = self.timed_broadcast(local_rank,rank,tensor,self.payload,world_size)
             case _:
@@ -86,7 +87,7 @@ class NCCLEval(BaseEval):
         
         dist.destroy_process_group()
         
-        return bandwith > self.min_bandwidth, {"bandwith":f"{conv_to_GBps(bandwith):6.2f} GB/s", "rank":rank, "local_rank":local_rank, "world_size":world_size}
+        return bandwith > self.min_bandwidth, {"bandwith":f"{conv_to_GBps(bandwith):6.2f} GB/s", "rank":rank, "local_rank":local_rank, "world_size":world_size, "mesurment_matrix":mesurment_matrix}
     
 
     def timed_allreduce(self,local_rank,rank,tensor,size,ranks):
@@ -107,6 +108,7 @@ class NCCLEval(BaseEval):
         start_event = torch.cuda.Event(enable_timing=True)
         end_event = torch.cuda.Event(enable_timing=True)
         measurments = np.array([])
+        metadata = []
         for i in range(ranks):
             for j in [j for j in range(ranks) if j != i]:
 
@@ -123,8 +125,9 @@ class NCCLEval(BaseEval):
                     torch.cuda.synchronize()
                     duration = start_event.elapsed_time(end_event) / 1000
                     if rank == i:
-                        measurments = np.append(measurments, size/duration )     
-        return np.mean(measurments) 
+                        measurments = np.append(measurments, size/duration )
+                        metadata.append({"from":i, "to":j, "bandwith":f"{conv_to_GBps(size/duration):6.2f} GB/s"})     
+        return np.min(measurments),metadata 
 
     def timed_broadcast(self,local_rank,rank,tensor,size,ranks):
         start_event = torch.cuda.Event(enable_timing=True)
