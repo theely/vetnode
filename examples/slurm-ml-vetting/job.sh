@@ -80,7 +80,7 @@ cd src
 python -m vetnode setup ../examples/slurm-ml-vetting/config.yaml &>> ../results.txt
 
 # Run nodes vetting
-srun --nodes=6 --tasks-per-node=1 python -m vetnode diagnose ../examples/slurm-ml-vetting/config.yaml &>> ../results.txt
+srun --nodes=6 --tasks-per-node=1 --kill-on-bad-exit=0 python -m vetnode diagnose ../examples/slurm-ml-vetting/config.yaml &>> ../results.txt
 
 #back to root folder
 cd ..

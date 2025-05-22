@@ -1,5 +1,6 @@
 
 import asyncio
+import os
 from typing import Literal
 
 
@@ -31,10 +32,18 @@ class CUDAEval(BaseEval):
     name:str
     type: Literal["vetnode.evaluations.cuda_eval.CUDAEval"]
     requirements: Literal[["cuda-python","numpy"]]
+    cuda_home: str
 
     def verify(self)->bool:
-        libc = CDLL("libnvrtc.so.12")  # On Linux
-        return libc is not None
+        libc = CDLL(f"{self.cuda_home}/libnvrtc.so")
+        if libc is not None:
+            return False
+        for filename in os.listdir(self.cuda_home):
+            if filename.endswith(".so"):
+                file_path = os.path.join(self.cuda_home, filename)
+                print(file_path)
+        return True
+
 
     async def check(self,executor)->tuple[bool,dict]:
         return await asyncio.get_event_loop().run_in_executor(executor, self._check)

@@ -102,8 +102,9 @@ pytest
 ```
 pip install -r ./requirements-testing.txt
 python3 -m build --wheel
-twine upload dist/*         
+twine upload dist/* 
 ```
+Note: API token is sotred in local file .pypirc
 
 
 

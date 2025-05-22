@@ -18,3 +18,14 @@ Next ensure all tests requirements are installed by running
 ```
 vetnode setup <vetnode-install folder>/config.yaml
 ```
+
+Existing vetnode home folders:
+- /capstor/scratch/cscs/palmee/vetnode/
+- /scratch/ceph/palmee/vetnode
+
+
+# Slurm Set-up
+
+Add the Alloc flag to PrologFlags (e.g. PrologFlags=Alloc,contain,X11) to enable node vetting at allocation time.
+
+Don't set ReturnToService to 0 or the nodes failing the vetting won't automatically reenter service. 
