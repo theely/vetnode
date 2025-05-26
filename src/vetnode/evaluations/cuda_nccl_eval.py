@@ -31,7 +31,7 @@ class CUDANCCLEval(BaseEval):
     min_bandwidth: BandwithSize = '15 GB/s'
     
     def verify(self)->bool:
-        libs =["libnvrtc.so.12","libnccl.so"]
+        libs =["libnvrtc.so","libnccl.so"]
         for lib in libs:
             libc = ctypes.CDLL(lib)
             if libc is None:

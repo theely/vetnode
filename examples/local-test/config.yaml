@@ -1,29 +1,29 @@
 name: Local Node Vetting
 evals:
-- name: CudaKernel
-  type: vetnode.evaluations.cuda_eval.CUDAEval
-  cuda_home: /opt/nvidia/hpc_sdk/Linux_aarch64/24.3/cuda/12.3/lib64
-  requirements:
-    - cuda-python
-    - numpy
-- name: Check GPU
-  type: vetnode.evaluations.gpu_eval.GPUEval
-  max_temp:  30
-  max_used_memory: 0.2
+#- name: CudaKernel
+#  type: vetnode.evaluations.cuda_eval.CUDAEval
+#  cuda_home: /opt/nvidia/hpc_sdk/Linux_aarch64/24.3/cuda/12.3/lib64
+#  requirements:
+#    - cuda-python
+#    - numpy
+#- name: Check GPU
+#  type: vetnode.evaluations.gpu_eval.GPUEval
+#  max_temp:  30
+#  max_used_memory: 0.2
 #- name: Random
 #  type: vetnode.evaluations.random.RandomEval
 #- name: Check GPU
 #  type: vetnode.evaluations.gpu_eval.GPUEval
 #  max_temp:  30
 #  max_used_memory: 0.2
-#- name: CUDANCCLEval
-#  type: vetnode.evaluations.cuda_nccl_eval.CUDANCCLEval
-#  scheduler: slurm
-#  payload: 2 GB
-#  method: broadcast
-#  min_bandwidth: 20 GB/s
-#  warmup:
-#    payload: 256 MB
-#    runs: 2
-#  requirements:
-#      - cuda-python
+- name: CUDANCCLEval
+  type: vetnode.evaluations.cuda_nccl_eval.CUDANCCLEval
+  scheduler: slurm
+  payload: 2 GB
+  method: broadcast
+  min_bandwidth: 20 GB/s
+  warmup:
+    payload: 256 MB
+    runs: 2
+  requirements:
+      - cuda-python
