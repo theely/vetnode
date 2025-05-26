@@ -1,6 +1,7 @@
 #!/bin/bash
 
 #SBATCH --nodes=2
+#SBATCH --ntasks-per-node=1
 #SBATCH --time=0-00:15:00
 #SBATCH --account=a-csstaff
 
@@ -58,5 +59,5 @@ cd src
 python -m vetnode  setup ../examples/local-test/config.yaml
 
 # Run nodes vetting
-srun python -m vetnode  diagnose ../examples/local-test/config.yaml
+srun  python -m vetnode  diagnose ../examples/local-test/config.yaml
 
