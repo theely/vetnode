@@ -138,7 +138,7 @@ class CUDANCCLEval(BaseEval):
         err, stream = cudart.cudaStreamCreate()
         assert err == 0
         click.echo(f"[Rank {rank}]  stream type: {type(stream)}")  
-        stream_ptr = ctypes.c_void_p(stream.getPtr())
+        stream_ptr = ctypes.c_void_p(int(stream))
 
 
         comm = ncclComm_t()
