@@ -18,6 +18,7 @@ import traceback
 # Define NCCL constants
 ncclUniqueId_t = ctypes.c_byte * 128
 ncclComm_t = ctypes.c_void_p
+cudaStream_t = ctypes.c_void_p
 
 
 
@@ -69,6 +70,9 @@ class CUDANCCLEval(BaseEval):
 
         nccl = ctypes.cdll.LoadLibrary('libnccl.so')
         
+
+        #TODO: re-implement following: https://github.com/vllm-project/vllm/blob/main/vllm/distributed/device_communicators/pynccl_wrapper.py#L49
+
         # Define API prototypes
         nccl.ncclGetUniqueId.restype = ctypes.c_int
         nccl.ncclGetUniqueId.argtypes = [ctypes.POINTER(ncclUniqueId_t)]
@@ -78,7 +82,7 @@ class CUDANCCLEval(BaseEval):
 
         nccl.ncclAllReduce.restype = ctypes.c_int
         nccl.ncclAllReduce.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_size_t,
-                                    ctypes.c_int, ctypes.c_int, ncclComm_t, ctypes.c_void_p]
+                                    ctypes.c_int, ctypes.c_int, ncclComm_t, cudaStream_t]
         
         nccl.ncclBroadcast.restype = ctypes.c_int
         nccl.ncclBroadcast.argtypes = [
@@ -88,7 +92,7 @@ class CUDANCCLEval(BaseEval):
             ctypes.c_int,     # datatype
             ctypes.c_int,     # root
             ncclComm_t,       # comm
-            ctypes.c_void_p,  # stream
+            cudaStream_t,  # stream
         ]
 
         nccl.ncclCommDestroy.restype = ctypes.c_int
@@ -132,7 +136,7 @@ class CUDANCCLEval(BaseEval):
         (err,) = cudart.cudaSetDevice(0)
         assert err == 0
 
-        (err, stream) = cudart.cudaStreamCreate()
+        err, stream = cudart.cudaStreamCreate()
         assert err == 0
 
 
