@@ -27,3 +27,4 @@ evals:
     runs: 2
   requirements:
       - cuda-python
+      - numpy

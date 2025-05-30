@@ -10,6 +10,9 @@ import ctypes, socket
 from vetnode.commands.scontrol.scontrol_command import ScontrolCommand
 from vetnode.evaluations.base_eval import BaseEval
 from vetnode.evaluations.models import BandwithSize, BinaryByteSize
+import numpy as np
+from cuda import cudart
+
 
 # Define NCCL constants
 ncclUniqueId_t = ctypes.c_byte * 128
@@ -71,11 +74,23 @@ class CUDANCCLEval(BaseEval):
         nccl.ncclAllReduce.restype = ctypes.c_int
         nccl.ncclAllReduce.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_size_t,
                                     ctypes.c_int, ctypes.c_int, ncclComm_t, ctypes.c_void_p]
+        
+        nccl.ncclBroadcast.restype = ctypes.c_int
+        nccl.ncclBroadcast.argtypes = [
+            ctypes.c_void_p,  # sendbuf
+            ctypes.c_void_p,  # recvbuf
+            ctypes.c_size_t,  # count
+            ctypes.c_int,     # datatype
+            ctypes.c_int,     # root
+            ncclComm_t,       # comm
+            ctypes.c_void_p,  # stream
+        ]
 
         nccl.ncclCommDestroy.restype = ctypes.c_int
         nccl.ncclCommDestroy.argtypes = [ncclComm_t]
                 
-        
+        ncclDataType_t = 7  # ncclFloat32
+        ncclRedOp_t = 0     # ncclSum
         
         uid = ncclUniqueId_t()
         if rank==0:
@@ -85,6 +100,7 @@ class CUDANCCLEval(BaseEval):
             
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.bind(('0.0.0.0', 13333))
+                s.settimeout(30) #wait 30s for clients to connect
                 s.listen()
                 click.echo(f"[Node: {rank}] Server waiting for {world_size-1} clients to connect")
                 for _ in range(world_size-1):
@@ -107,8 +123,36 @@ class CUDANCCLEval(BaseEval):
                 
         click.echo(f"[Rank {rank}] Setting uid: {base64.b64encode(bytes(uid))}")
 
+
+        status, _ = cudart.cudaSetDevice(0)
+        assert status == 0
+
+        status, stream = cudart.cudaStreamCreate()
+        assert status == 0
+
+
         comm = ncclComm_t()
         nccl.ncclCommInitRank(ctypes.byref(comm), world_size, uid, rank)
+        
+        
+        
+        # === Step 3: Create and reduce data ===
+        n = 4
+        host = np.full(n, rank + 1, dtype=np.float32)
+        status, dev_in = cudart.cudaMalloc(host.nbytes)
+        status, dev_out = cudart.cudaMalloc(host.nbytes)
+        cudart.cudaMemcpy(dev_in, host.ctypes.data, host.nbytes, cudart.cudaMemcpyKind.cudaMemcpyHostToDevice)
+
+        nccl.ncclAllReduce(dev_in, dev_out, n, ncclDataType_t, ncclRedOp_t, comm, stream)
+        cudart.cudaStreamSynchronize(stream)
+
+        result = np.empty_like(host)
+        cudart.cudaMemcpy(result.ctypes.data, dev_out, result.nbytes, cudart.cudaMemcpyKind.cudaMemcpyDeviceToHost)
+
+        click.echo(f"[Rank {rank}] Result: {result}")
+        
+        
         nccl.ncclCommDestroy(comm)
+        
         return True, {}
 
