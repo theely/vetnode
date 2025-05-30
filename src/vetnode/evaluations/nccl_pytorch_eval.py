@@ -24,9 +24,9 @@ class NCCLEvalWarmUp(BaseModel):
     payload:BinaryByteSize= '256 MB'
     runs:int= 3
 
-class NCCLEval(BaseEval):
+class NcclPytorchEval(BaseEval):
     name:str
-    type: Literal["vetnode.evaluations.nccl_eval.NCCLEval"]
+    type: Literal["vetnode.evaluations.nccl_pytorch_eval.NcclPytorchEval"]
     requirements: Literal[[['torch','--index-url','https://download.pytorch.org/whl/cu126'],"numpy"]]
     scheduler:  Literal["slurm","openPBS"]
     payload: BinaryByteSize = '4 GB'

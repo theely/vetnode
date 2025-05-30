@@ -25,9 +25,9 @@ class NCCLEvalWarmUp(BaseModel):
     payload:BinaryByteSize= '256 MB'
     runs:int= 3
 
-class CUDANCCLEval(BaseEval):
+class NcclLibEval(BaseEval):
     name:str
-    type: Literal["vetnode.evaluations.cuda_nccl_eval.CUDANCCLEval"]
+    type: Literal["vetnode.evaluations.nccl_lib_eval.NcclLibEval"]
     requirements: Literal[["cuda-python","numpy"]]
     scheduler:  Literal["slurm"]
     payload: BinaryByteSize = '4 GB'

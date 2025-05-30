@@ -10,7 +10,7 @@ evals:
   max_temp:  30
   max_used_memory: 0.2
 - name: NCCL
-  type: vetnode.evaluations.nccl_eval.NCCLEval
+  type: vetnode.evaluations.nccl_pytorch_eval.NcclPytorchEval
   scheduler: slurm
   payload: 2 GB
   method: roundrobin

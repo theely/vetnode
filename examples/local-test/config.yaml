@@ -16,8 +16,8 @@ evals:
 #  type: vetnode.evaluations.gpu_eval.GPUEval
 #  max_temp:  30
 #  max_used_memory: 0.2
-#- name: CUDANCCLEval
-#  type: vetnode.evaluations.cuda_nccl_eval.CUDANCCLEval
+#- name: NcclLib
+#  type: vetnode.evaluations.nccl_lib_eval.NcclLibEval
 #  scheduler: slurm
 #  payload: 2 GB
 #  method: broadcast
@@ -28,8 +28,8 @@ evals:
 #  requirements:
 #      - cuda-python
 #      - numpy
-- name: NCCL
-  type: vetnode.evaluations.nccl_eval.NCCLEval
+- name: NcclPytorch
+  type: vetnode.evaluations.nccl_pytorch_eval.NcclPytorchEval
   scheduler: slurm
   payload: 2 GB
   method: allreduce
