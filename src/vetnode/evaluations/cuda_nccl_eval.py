@@ -13,7 +13,6 @@ from vetnode.evaluations.models import BandwithSize, BinaryByteSize
 import numpy as np
 from cuda import cudart
 import traceback
-import cudaStream_t from cuda.bindings.runtime
 
 # Define NCCL constants
 ncclUniqueId_t = ctypes.c_byte * 128
