@@ -27,20 +27,22 @@ export LD_PRELOAD=$PATH_PLUGIN/lib/libnccl-net.so
 
 # Official flags https://eth-cscs.github.io/cscs-docs/software/communication/nccl/
 # export NCCL_NET="AWS Libfabric" Note:only works with uenv
-export NCCL_NET_GDR_LEVEL="PHB"
-export FI_CXI_DEFAULT_CQ_SIZE=131072
-export FI_CXI_DEFAULT_TX_SIZE=32768
-export FI_CXI_DISABLE_HOST_REGISTER=1
-export FI_CXI_RX_MATCH_MODE=software
-export FI_MR_CACHE_MONITOR="userfaultfd"
-export MPICH_GPU_SUPPORT_ENABLED=0
 
-# Other flags 
-# export CXI_FORK_SAFE="1"
-# export CXI_FORK_SAFE_HP="1"
-# export FI_CXI_DISABLE_CQ_HUGETLB="1"
+export NCCL_NET_GDR_LEVEL="PHB"
+export CXI_FORK_SAFE="1"
+export CXI_FORK_SAFE_HP="1"
+export FI_CXI_DISABLE_CQ_HUGETLB="1"
 export NCCL_CROSS_NIC="1"
 export NCCL_DEBUG="Info"
+export FI_CXI_DISABLE_HOST_REGISTER="1"
+export FI_MR_CACHE_MONITOR="userfaultfd"
+
+# other suggested flags
+#export FI_CXI_DEFAULT_CQ_SIZE=131072
+#export FI_CXI_DEFAULT_TX_SIZE=32768
+#export FI_CXI_RX_MATCH_MODE=software
+#export MPICH_GPU_SUPPORT_ENABLED=0
+
 
 
 source .venv/bin/activate
