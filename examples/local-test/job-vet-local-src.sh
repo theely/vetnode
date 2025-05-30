@@ -26,7 +26,7 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PATH_PLUGIN/lib/
 export LD_PRELOAD=$PATH_PLUGIN/lib/libnccl-net.so 
 
 # Official flags https://eth-cscs.github.io/cscs-docs/software/communication/nccl/
-export NCCL_NET_PLUGIN="ofi"  # with uenv export NCCL_NET="AWS Libfabric"
+export NCCL_NET="AWS Libfabric"
 export NCCL_NET_GDR_LEVEL="PHB"
 export FI_CXI_DEFAULT_CQ_SIZE=131072
 export FI_CXI_DEFAULT_TX_SIZE=32768
