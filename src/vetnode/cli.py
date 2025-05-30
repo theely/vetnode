@@ -17,7 +17,6 @@ def diagnose(config) -> None:
     Configuration._yaml_file = config
     configuration = Configuration()
     click.echo(f"Running sanity checks: {configuration.name} on node:{hostname}")
-    click.echo("TEST!!")
     evals = load_evals(configuration.evals)
     results = asyncio.run(run_evals(evals))
     healthy:bool=True
@@ -70,7 +69,6 @@ def load_evals(eval_configs: List[EvalConfiguration], install:bool=False):
         try:
             if install and eval.requirements:
                 load_requirements(eval.requirements)
-            click.echo(f"Loading test class: {eval.name}")
             eval_class = locate(eval.type)
             evals.append(eval_class(**eval.model_dump()))
         except Exception as ex:

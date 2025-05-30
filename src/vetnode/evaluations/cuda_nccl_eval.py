@@ -32,8 +32,7 @@ class CUDANCCLEval(BaseEval):
     min_bandwidth: BandwithSize = '15 GB/s'
     
     def verify(self)->bool:
-        click.echo(f"VERIFY!")
-        libs =["libnvrtc.so","libnccl.so"]
+        libs =["libnvrtc.so","libnccl.so"]   #add lib libnccl-net.so
         for lib in libs:
             libc = ctypes.CDLL(lib)
             if libc is None:
@@ -45,7 +44,6 @@ class CUDANCCLEval(BaseEval):
 
 
     def _check(self)->tuple[bool,dict]:
-        click.echo(f"CHECK!")
         local_rank =None
         rank= None
         nodes = None
@@ -61,8 +59,6 @@ class CUDANCCLEval(BaseEval):
             case _:
                 raise NotImplementedError("Support for the rquested scheduler has not been implemented.")
 
-        
-        click.echo(f"[Node: {rank}] Loading libnnccl")
         nccl = ctypes.cdll.LoadLibrary('libnccl.so')
         
         # Define API prototypes
@@ -90,7 +86,7 @@ class CUDANCCLEval(BaseEval):
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.bind(('0.0.0.0', 13333))
                 s.listen()
-                click.echo(f"[Node: {rank}] Server waiting for {world_size} clients to connect")
+                click.echo(f"[Node: {rank}] Server waiting for {world_size-1} clients to connect")
                 for _ in range(world_size-1):
                     conn, _ = s.accept()
                     click.echo(f"[Node: {rank}] Server client connected")
