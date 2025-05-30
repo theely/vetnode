@@ -86,25 +86,27 @@ class CUDANCCLEval(BaseEval):
             click.echo(f"[Node: {rank}] Server starting...")
             nccl.ncclGetUniqueId(ctypes.byref(uid))
             click.echo(f"[Node: {rank}] Server Generated uid: {base64.b64encode(bytes(uid))}")
-            click.echo(f"[Node: {rank}] Server waiting for connection")
+            
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.bind(('0.0.0.0', 13333))
                 s.listen()
-                for _ in range(world_size):
+                click.echo(f"[Node: {rank}] Server waiting for {world_size} clients to connect")
+                for _ in range(world_size-1):
                     conn, _ = s.accept()
+                    click.echo(f"[Node: {rank}] Server client connected")
                     with conn:
                         conn.send(uid)
         else:
             click.echo(f"[Node: {rank}] Client try to connect")
             for i in range(5):
                 try:
-                    click.echo(f"[Node: {rank}] Client connection (try: i)")
+                    click.echo(f"[Node: {rank}] Client connection (try: {i})")
                     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                         s.connect((master_node, 13333))
                         s.recv_into(uid)
                         break
                 except socket.error:
-                    click.echo(f"Connection to {master_node} failed, retrying..")
+                    click.echo(f"[Node: {rank}] Client connection to {master_node} failed, retrying..")
                     time.sleep(2)
                 
         click.echo(f"[Rank {rank}] Setting uid: {base64.b64encode(bytes(uid))}")
