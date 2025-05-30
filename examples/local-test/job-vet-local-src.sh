@@ -21,6 +21,7 @@ echo "  ╚═══╝  ╚══════╝   ╚═╝   ╚═╝  ╚�
 export PATH_PLUGIN=$(pwd)/aws-ofi-nccl
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/nvidia/hpc_sdk/Linux_aarch64/24.3/cuda/12.3/lib64/
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/nvidia/hpc_sdk/Linux_aarch64/2024/comm_libs/nccl/lib/
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/cray/libfabric/1.22.0/lib64/
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PATH_PLUGIN/lib/
 export LD_PRELOAD=$PATH_PLUGIN/lib/libnccl-net.so 
 
