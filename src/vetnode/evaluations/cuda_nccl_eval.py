@@ -123,12 +123,12 @@ class CUDANCCLEval(BaseEval):
                 
         click.echo(f"[Rank {rank}] Setting uid: {base64.b64encode(bytes(uid))}")
 
+        cudart.cudaGetDevice()
+        (err,) = cudart.cudaSetDevice(0)
+        assert err == 0
 
-        status, _ = cudart.cudaSetDevice(0)
-        assert status == 0
-
-        status, stream = cudart.cudaStreamCreate()
-        assert status == 0
+        (err, stream) = cudart.cudaStreamCreate()
+        assert err == 0
 
 
         comm = ncclComm_t()
