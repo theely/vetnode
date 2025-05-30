@@ -110,4 +110,5 @@ class CUDANCCLEval(BaseEval):
         comm = ncclComm_t()
         nccl.ncclCommInitRank(ctypes.byref(comm), world_size, uid, rank)
         nccl.ncclCommDestroy(comm)
+        return True, {}
 
