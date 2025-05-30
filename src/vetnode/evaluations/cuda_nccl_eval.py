@@ -154,7 +154,7 @@ class CUDANCCLEval(BaseEval):
         cudart.cudaMemcpy(dev_in, host.ctypes.data, host.nbytes, cudart.cudaMemcpyKind.cudaMemcpyHostToDevice)
 
         nccl.ncclAllReduce(dev_in, dev_out, n, ncclDataType_t, ncclRedOp_t, comm, stream_ptr)
-        cudart.cudaStreamSynchronize(stream_ptr)
+        cudart.cudaStreamSynchronize(stream)
 
         result = np.empty_like(host)
         cudart.cudaMemcpy(result.ctypes.data, dev_out, result.nbytes, cudart.cudaMemcpyKind.cudaMemcpyDeviceToHost)
