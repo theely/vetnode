@@ -144,22 +144,20 @@ class CUDANCCLEval(BaseEval):
         comm = ncclComm_t()
         nccl.ncclCommInitRank(ctypes.byref(comm), world_size, uid, rank)
         
+        n = self.payload//4 #np.float32 is 4 baytes
         
-        
-        # === Step 3: Create and reduce data ===
-        n = 4
         host = np.full(n, rank + 1, dtype=np.float32)
         status, dev_in = cudart.cudaMalloc(host.nbytes)
         status, dev_out = cudart.cudaMalloc(host.nbytes)
         cudart.cudaMemcpy(dev_in, host.ctypes.data, host.nbytes, cudart.cudaMemcpyKind.cudaMemcpyHostToDevice)
 
+        start_time = time.time()
         nccl.ncclAllReduce(dev_in, dev_out, n, ncclDataType_t, ncclRedOp_t, comm, stream_ptr)
         cudart.cudaStreamSynchronize(stream)
+        end_time = time.time()
+        elapsedtime = end_time-start_time
 
-        result = np.empty_like(host)
-        cudart.cudaMemcpy(result.ctypes.data, dev_out, result.nbytes, cudart.cudaMemcpyKind.cudaMemcpyDeviceToHost)
-
-        click.echo(f"[Rank {rank}] Result: {result}")
+        click.echo(f"[Rank {rank}] Bandwidth: {self.payload/elapsedtime }")
         
         
         nccl.ncclCommDestroy(comm)
