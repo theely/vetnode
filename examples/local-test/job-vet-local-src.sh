@@ -33,7 +33,7 @@ export CXI_FORK_SAFE="1"
 export CXI_FORK_SAFE_HP="1"
 export FI_CXI_DISABLE_CQ_HUGETLB="1"
 export NCCL_CROSS_NIC="1"
-export NCCL_DEBUG="Info"
+export NCCL_DEBUG="Error"
 export FI_CXI_DISABLE_HOST_REGISTER="1"
 export FI_MR_CACHE_MONITOR="userfaultfd"
 

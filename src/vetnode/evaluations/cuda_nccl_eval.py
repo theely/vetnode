@@ -19,7 +19,7 @@ ncclUniqueId_t = ctypes.c_byte * 128
 ncclComm_t = ctypes.c_void_p
 cudaStream_t = ctypes.c_void_p
 
-
+conv_to_GBps = lambda v : v/10**9
 
 class NCCLEvalWarmUp(BaseModel):
     payload:BinaryByteSize= '256 MB'
@@ -102,42 +102,31 @@ class CUDANCCLEval(BaseEval):
         
         uid = ncclUniqueId_t()
         if rank==0:
-            click.echo(f"[Node: {rank}] Server starting...")
-            nccl.ncclGetUniqueId(ctypes.byref(uid))
-            click.echo(f"[Node: {rank}] Server Generated uid: {base64.b64encode(bytes(uid))}")
-            
+            nccl.ncclGetUniqueId(ctypes.byref(uid))            
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.bind(('0.0.0.0', 13333))
                 s.settimeout(30) #wait 30s for clients to connect
                 s.listen()
-                click.echo(f"[Node: {rank}] Server waiting for {world_size-1} clients to connect")
                 for _ in range(world_size-1):
                     conn, _ = s.accept()
-                    click.echo(f"[Node: {rank}] Server client connected")
                     with conn:
                         conn.send(uid)
         else:
-            click.echo(f"[Node: {rank}] Client try to connect")
             for i in range(5):
                 try:
-                    click.echo(f"[Node: {rank}] Client connection (try: {i})")
                     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                         s.connect((master_node, 13333))
                         s.recv_into(uid)
                         break
                 except socket.error:
-                    click.echo(f"[Node: {rank}] Client connection to {master_node} failed, retrying..")
-                    time.sleep(2)
+                    time.sleep(1)
                 
-        click.echo(f"[Rank {rank}] Setting uid: {base64.b64encode(bytes(uid))}")
-
         cudart.cudaGetDevice()
         (err,) = cudart.cudaSetDevice(0)
         assert err == 0
 
         err, stream = cudart.cudaStreamCreate()
         assert err == 0
-        click.echo(f"[Rank {rank}]  stream type: {type(stream)}")  
         stream_ptr = ctypes.c_void_p(int(stream))
 
 
@@ -157,10 +146,8 @@ class CUDANCCLEval(BaseEval):
         end_time = time.time()
         elapsedtime = end_time-start_time
 
-        click.echo(f"[Rank {rank}] Bandwidth: {self.payload/elapsedtime }")
-        
-        
+                
         nccl.ncclCommDestroy(comm)
         
-        return True, {}
+        return True, {"Bandwidth": f"{conv_to_GBps(self.payload/elapsedtime):6.2f} GB/s"}
 

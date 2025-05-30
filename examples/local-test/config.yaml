@@ -16,15 +16,27 @@ evals:
 #  type: vetnode.evaluations.gpu_eval.GPUEval
 #  max_temp:  30
 #  max_used_memory: 0.2
-- name: CUDANCCLEval
-  type: vetnode.evaluations.cuda_nccl_eval.CUDANCCLEval
+#- name: CUDANCCLEval
+#  type: vetnode.evaluations.cuda_nccl_eval.CUDANCCLEval
+#  scheduler: slurm
+#  payload: 2 GB
+#  method: broadcast
+#  min_bandwidth: 20 GB/s
+#  warmup:
+#    payload: 256 MB
+#    runs: 2
+#  requirements:
+#      - cuda-python
+#      - numpy
+- name: NCCL
+  type: vetnode.evaluations.nccl_eval.NCCLEval
   scheduler: slurm
   payload: 2 GB
-  method: broadcast
+  method: allreduce
   min_bandwidth: 20 GB/s
   warmup:
     payload: 256 MB
     runs: 2
   requirements:
-      - cuda-python
+      - ['torch', '--index-url', 'https://download.pytorch.org/whl/cu126']
       - numpy
