@@ -61,7 +61,8 @@ if [ $(wc -l < ./vetted-nodes.txt) -ge $REQUIRED_NODES ]; then
     mkdir aws-ofi-nccl
     mkdir aws-ofi-nccl/lib
     arch=$(uname -m)
-    curl -o ./aws-ofi-nccl/lib/libnccl-net.so https://jfrog.svc.cscs.ch/artifactory/aws-ofi-nccl-gen-dev/v1.9.2-aws-cf6f657/${arch}/SLES/15.5/cuda12/lib/libnccl-net.so
+    curl -o ./aws-ofi-nccl/lib/libnccl-net.so https://jfrog.svc.cscs.ch/artifactory/aws-ofi-nccl-gen-dev/v1.14.1-cae0941/${arch}/SLES/15.5/cuda12/lib/libnccl-net.so
+    
     export PATH_PLUGIN=$(pwd)/aws-ofi-nccl
 
     # Activate AWS NCCL plugin
