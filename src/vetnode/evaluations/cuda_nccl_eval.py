@@ -138,7 +138,7 @@ class CUDANCCLEval(BaseEval):
 
         err, stream = cudart.cudaStreamCreate()
         assert err == 0
-
+        click.echo(f"[Rank {rank}]  stream type: {type(stream)}")  
 
         comm = ncclComm_t()
         nccl.ncclCommInitRank(ctypes.byref(comm), world_size, uid, rank)
