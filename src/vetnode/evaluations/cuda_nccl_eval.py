@@ -138,6 +138,8 @@ class CUDANCCLEval(BaseEval):
         err, stream = cudart.cudaStreamCreate()
         assert err == 0
         click.echo(f"[Rank {rank}]  stream type: {type(stream)}")  
+        stream_ptr = ctypes.c_void_p(stream.getPtr())
+
 
         comm = ncclComm_t()
         nccl.ncclCommInitRank(ctypes.byref(comm), world_size, uid, rank)
@@ -151,8 +153,8 @@ class CUDANCCLEval(BaseEval):
         status, dev_out = cudart.cudaMalloc(host.nbytes)
         cudart.cudaMemcpy(dev_in, host.ctypes.data, host.nbytes, cudart.cudaMemcpyKind.cudaMemcpyHostToDevice)
 
-        nccl.ncclAllReduce(dev_in, dev_out, n, ncclDataType_t, ncclRedOp_t, comm, stream.getPtr())
-        cudart.cudaStreamSynchronize(stream.getPtr())
+        nccl.ncclAllReduce(dev_in, dev_out, n, ncclDataType_t, ncclRedOp_t, comm, stream_ptr)
+        cudart.cudaStreamSynchronize(stream_ptr)
 
         result = np.empty_like(host)
         cudart.cudaMemcpy(result.ctypes.data, dev_out, result.nbytes, cudart.cudaMemcpyKind.cudaMemcpyDeviceToHost)
