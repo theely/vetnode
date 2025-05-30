@@ -31,6 +31,7 @@ class CUDANCCLEval(BaseEval):
     min_bandwidth: BandwithSize = '15 GB/s'
     
     def verify(self)->bool:
+        print(f"VERIFY!")
         libs =["libnvrtc.so","libnccl.so"]
         for lib in libs:
             libc = ctypes.CDLL(lib)
@@ -43,7 +44,7 @@ class CUDANCCLEval(BaseEval):
 
 
     def _check(self)->tuple[bool,dict]:
-
+        print(f"CHECK!")
         local_rank =None
         rank= None
         nodes = None

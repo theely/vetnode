@@ -35,8 +35,12 @@ source .venv/bin/activate
 
 cd src
 
+echo "=== SETUP ==="
+
 #Setup node vetting on main node
 python -m vetnode  setup ../examples/local-test/config.yaml
+
+echo "=== VETTING ==="
 
 # Run nodes vetting
 srun  python -m vetnode  diagnose ../examples/local-test/config.yaml
