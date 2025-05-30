@@ -59,6 +59,8 @@ class CUDANCCLEval(BaseEval):
             case _:
                 raise NotImplementedError("Support for the rquested scheduler has not been implemented.")
 
+        
+        print(f"[Node: {rank}] Loading libnnccl")
         nccl = ctypes.cdll.LoadLibrary('libnccl.so')
         
         # Define API prototypes
@@ -79,8 +81,10 @@ class CUDANCCLEval(BaseEval):
         
         uid = ncclUniqueId_t()
         if rank==0:
+            print(f"[Node: {rank}] Server starting...")
             nccl.ncclGetUniqueId(ctypes.byref(uid))
-            print(f"Generated uid: {base64.b64encode(bytes(uid))}")
+            print(f"[Node: {rank}] Server Generated uid: {base64.b64encode(bytes(uid))}")
+            print(f"[Node: {rank}] Server waiting for connection")
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.bind(('0.0.0.0', 13333))
                 s.listen()
@@ -89,8 +93,10 @@ class CUDANCCLEval(BaseEval):
                     with conn:
                         conn.send(uid)
         else:
+            print(f"[Node: {rank}] Client try to connect")
             for i in range(5):
                 try:
+                    print(f"[Node: {rank}] Client connection (try: i)")
                     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                         s.connect((master_node, 13333))
                         s.recv_into(uid)
@@ -100,7 +106,7 @@ class CUDANCCLEval(BaseEval):
                     print(f"Connection to {master_node} failed, retrying..")
                     time.sleep(2)
                 
-        print(f"[Rank {rank}] received uid: {base64.b64encode(bytes(uid))}")
+        print(f"[Rank {rank}] Setting uid: {base64.b64encode(bytes(uid))}")
 
         comm = ncclComm_t()
         nccl.ncclCommInitRank(ctypes.byref(comm), world_size, uid, rank)
