@@ -12,6 +12,7 @@ from vetnode.evaluations.base_eval import BaseEval
 from vetnode.evaluations.models import BandwithSize, BinaryByteSize
 import numpy as np
 from cuda import cudart
+import traceback
 
 
 # Define NCCL constants
@@ -43,7 +44,11 @@ class CUDANCCLEval(BaseEval):
         return True
 
     async def check(self,executor)->bool:
-        return await asyncio.get_event_loop().run_in_executor(executor, self._check)
+        try:
+            return await asyncio.get_event_loop().run_in_executor(executor, self._check)
+        except Exception as e:
+            click.echo(f"Error executing check: {e}")
+            traceback.print_exc()
 
 
     def _check(self)->tuple[bool,dict]:
