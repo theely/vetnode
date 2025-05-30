@@ -13,11 +13,12 @@ from vetnode.evaluations.models import BandwithSize, BinaryByteSize
 import numpy as np
 from cuda import cudart
 import traceback
-from cuda.bindings.runtime import cudaStream_t
+import cudaStream_t from cuda.bindings.runtime
 
 # Define NCCL constants
 ncclUniqueId_t = ctypes.c_byte * 128
 ncclComm_t = ctypes.c_void_p
+cudaStream_t = ctypes.c_void_p
 
 
 
@@ -151,8 +152,8 @@ class CUDANCCLEval(BaseEval):
         status, dev_out = cudart.cudaMalloc(host.nbytes)
         cudart.cudaMemcpy(dev_in, host.ctypes.data, host.nbytes, cudart.cudaMemcpyKind.cudaMemcpyHostToDevice)
 
-        nccl.ncclAllReduce(dev_in, dev_out, n, ncclDataType_t, ncclRedOp_t, comm, stream)
-        cudart.cudaStreamSynchronize(stream)
+        nccl.ncclAllReduce(dev_in, dev_out, n, ncclDataType_t, ncclRedOp_t, comm, stream.getPtr())
+        cudart.cudaStreamSynchronize(stream.getPtr())
 
         result = np.empty_like(host)
         cudart.cudaMemcpy(result.ctypes.data, dev_out, result.nbytes, cudart.cudaMemcpyKind.cudaMemcpyDeviceToHost)
