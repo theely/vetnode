@@ -1,4 +1,6 @@
 name: Local Node Vetting
+pip:
+   index_url: "https://pypi.org/simple"
 evals:
 #- name: CudaKernel
 #  type: vetnode.evaluations.cuda_eval.CUDAEval
