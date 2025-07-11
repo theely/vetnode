@@ -1,6 +1,7 @@
 
-from typing import  Any, ClassVar, List, Tuple, Type, TypeVar, Union
+from typing import  Any, ClassVar, List, Optional, Tuple, Type, TypeVar, Union
 from click import Path
+from pydantic import BaseModel
 from pydantic_settings import (
     BaseSettings,
     PydanticBaseSettingsSource,
@@ -9,7 +10,8 @@ from pydantic_settings import (
 
 from vetnode.evaluations.models import EvalConfiguration
 
-
+class PIPConfig(BaseModel):
+    index_url:Optional[str]=None
 
 class Configuration(BaseSettings):
     
@@ -17,6 +19,7 @@ class Configuration(BaseSettings):
 
     name:str
     evals:List[EvalConfiguration]
+    pip:PIPConfig
 
     def __init__(self, path=None, *args, **kwargs):
         if path:

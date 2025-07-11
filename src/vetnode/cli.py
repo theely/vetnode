@@ -47,7 +47,7 @@ def setup(config) -> None:
     click.echo("----------------------------")
     click.echo("** Tests initialization!  **")
     click.echo("----------------------------")
-    load_evals(configuration.evals, install=True)
+    load_evals(configuration.evals, install=True, index_url=configuration.pip.index_url)
 
 
 async def run_evals(evals):
@@ -61,23 +61,25 @@ async def run_evals(evals):
     return await asyncio.gather(*tasks, return_exceptions=True)
 
 
-def load_evals(eval_configs: List[EvalConfiguration], install:bool=False):
+def load_evals(eval_configs: List[EvalConfiguration], install:bool=False,index_url: str = None):
     evals = []
     for eval in eval_configs:
         
         #Load class dynamically
         try:
             if install and eval.requirements:
-                load_requirements(eval.requirements)
+                load_requirements(eval.requirements,index_url)
             eval_class = locate(eval.type)
             evals.append(eval_class(**eval.model_dump()))
         except Exception as ex:
             click.secho(f"Skipped: {eval.name} (error: {ex})", fg='red')
     return evals
 
-def load_requirements(requirements: List[str]):
+def load_requirements(requirements: List[str], index_url: str = None):
     for package in requirements:
         cmd = [sys.executable, "-m", "pip", "install"]
+        if index_url:
+            cmd += ["--index-url",index_url]
         if isinstance(package, str):
             cmd.append(package)
         else:
