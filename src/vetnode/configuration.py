@@ -19,7 +19,7 @@ class Configuration(BaseSettings):
 
     name:str
     evals:List[EvalConfiguration]
-    pip:PIPConfig
+    pip:Optional[PIPConfig] = PIPConfig()
 
     def __init__(self, path=None, *args, **kwargs):
         if path:
