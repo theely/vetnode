@@ -83,6 +83,9 @@ class NcclLibEval(BaseEval):
         nccl.ncclAllReduce.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_size_t,
                                     ctypes.c_int, ctypes.c_int, ncclComm_t, cudaStream_t]
         
+        nccl.ncclGetErrorString.restype = ctypes.c_char_p
+        nccl.ncclGetErrorString.argtypes = [ctypes.c_int]
+        
         nccl.ncclBroadcast.restype = ctypes.c_int
         nccl.ncclBroadcast.argtypes = [
             ctypes.c_void_p,  # sendbuf
@@ -131,7 +134,10 @@ class NcclLibEval(BaseEval):
 
 
         comm = ncclComm_t()
-        nccl.ncclCommInitRank(ctypes.byref(comm), world_size, uid, rank)
+        result = nccl.ncclCommInitRank(ctypes.byref(comm), world_size, uid, rank)
+        if result != 0:
+            error_str = nccl.ncclGetErrorString(result)
+            return False, {"error": f"NCCL error: {error_str.decode('utf-8')}"}
         
         n = self.payload//4 #np.float32 is 4 baytes
         
@@ -141,13 +147,16 @@ class NcclLibEval(BaseEval):
         cudart.cudaMemcpy(dev_in, host.ctypes.data, host.nbytes, cudart.cudaMemcpyKind.cudaMemcpyHostToDevice)
 
         start_time = time.time()
-        nccl.ncclAllReduce(dev_in, dev_out, n, ncclDataType_t, ncclRedOp_t, comm, stream_ptr)
+        result = nccl.ncclAllReduce(dev_in, dev_out, n, ncclDataType_t, ncclRedOp_t, comm, stream_ptr)
+        if result != 0:
+            error_str = nccl.ncclGetErrorString(result)
+            return False, {"error": f"NCCL error: {error_str.decode('utf-8')}"}
+        
         cudart.cudaStreamSynchronize(stream)
         end_time = time.time()
         elapsedtime = end_time-start_time
-
-                
+   
         nccl.ncclCommDestroy(comm)
-        
-        return True, {"Bandwidth": f"{conv_to_GBps(self.payload/elapsedtime):6.2f} GB/s"}
+        bandwith = self.payload/elapsedtime   
+        return bandwith > self.min_bandwidth, {"Bandwidth": f"{conv_to_GBps(bandwith):6.2f} GB/s"}
 
