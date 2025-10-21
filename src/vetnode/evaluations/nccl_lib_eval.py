@@ -11,8 +11,8 @@ from vetnode.commands.scontrol.scontrol_command import ScontrolCommand
 from vetnode.evaluations.base_eval import BaseEval
 from vetnode.evaluations.models import BandwithSize, BinaryByteSize
 import numpy as np
-from cuda import cudart
 import traceback
+import cuda.bindings.runtime as cudart
 
 # Define NCCL constants
 ncclUniqueId_t = ctypes.c_byte * 128
