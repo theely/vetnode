@@ -36,7 +36,7 @@ class NcclLibEval(BaseEval):
     min_bandwidth: BandwithSize = '15 GB/s'
     
     def verify(self)->bool:
-        libs =["libnvrtc.so","libnccl.so"]   #add lib libnccl-net.so
+        libs =["libnccl.so"]   #add lib libnccl-net.so "libnvrtc.so"
         for lib in libs:
             libc = ctypes.CDLL(lib)
             if libc is None:
