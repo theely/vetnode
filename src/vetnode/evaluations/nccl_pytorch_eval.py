@@ -27,7 +27,7 @@ class NCCLEvalWarmUp(BaseModel):
 class NcclPytorchEval(BaseEval):
     name:str
     type: Literal["vetnode.evaluations.nccl_pytorch_eval.NcclPytorchEval"]
-    requirements: Literal[[['torch','--index-url','https://download.pytorch.org/whl/cu126'],"numpy"]]
+    requirements: Literal[[['torch','--index-url','https://download.pytorch.org/whl/cu129'],"numpy"]]
     scheduler:  Literal["slurm","openPBS"]
     payload: BinaryByteSize = '4 GB'
     method: Literal["broadcast","roundrobin","allreduce"] = "broadcast"
