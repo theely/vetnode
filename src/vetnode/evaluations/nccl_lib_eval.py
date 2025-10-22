@@ -31,7 +31,7 @@ class NcclLibEval(BaseEval):
     requirements: Literal[["cuda-python","numpy"]]
     scheduler:  Literal["slurm"]
     payload: BinaryByteSize = '4 GB'
-    method: Literal["broadcast"] = "broadcast"
+    method: Literal["allreduce"] = "allreduce"
     warmup: NCCLEvalWarmUp
     min_bandwidth: BandwithSize = '15 GB/s'
     
@@ -157,6 +157,6 @@ class NcclLibEval(BaseEval):
         elapsedtime = end_time-start_time
    
         nccl.ncclCommDestroy(comm)
-        bandwith = self.payload/elapsedtime   
+        bandwith = (self.payload/elapsedtime) * (2*(world_size - 1) / world_size)   
         return bandwith > self.min_bandwidth, {"Bandwidth": f"{conv_to_GBps(bandwith):6.2f} GB/s"}
 
