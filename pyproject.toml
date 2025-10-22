@@ -1,6 +1,6 @@
 [project]
 name = "VetNode"
-version = "0.0.7"
+version = "0.0.8"
 authors = [
   { name="Elia Palme", email="elia.palme@cscs.ch" },
 ]
@@ -23,8 +23,8 @@ license = "BSD-3-Clause"
 license-files = ["LICENSE"]
 
 [project.urls]
-Homepage = "https://github.com/theely/shrink"
-Issues = "https://github.com/theely/shrink/issues"
+Homepage = "https://github.com/theely/vetnode"
+Issues = "https://github.com/theely/vetnode/issues"
 
 [build-system]
 requires = ["hatchling"]
