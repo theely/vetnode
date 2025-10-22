@@ -139,6 +139,16 @@ class NcclLibEval(BaseEval):
             error_str = nccl.ncclGetErrorString(result)
             return False, {"error": f"NCCL error: {error_str.decode('utf-8')}"}
         
+        # Warm-up phase
+        n = self.warmup.payload//4 #np.float32 is 4 baytes
+        host = np.full(n, rank + 1, dtype=np.float32)
+        status, dev_in = cudart.cudaMalloc(host.nbytes)
+        status, dev_out = cudart.cudaMalloc(host.nbytes)
+        cudart.cudaMemcpy(dev_in, host.ctypes.data, host.nbytes, cudart.cudaMemcpyKind.cudaMemcpyHostToDevice)
+        for _ in range(self.warmup.runs):
+            nccl.ncclAllReduce(dev_in, dev_out, n, ncclDataType_t, ncclRedOp_t, comm, stream_ptr)
+
+        # Actual measurement
         n = self.payload//4 #np.float32 is 4 baytes
         
         host = np.full(n, rank + 1, dtype=np.float32)
@@ -159,4 +169,3 @@ class NcclLibEval(BaseEval):
         nccl.ncclCommDestroy(comm)
         bandwith = (self.payload/elapsedtime) * (2*(world_size - 1) / world_size)   
         return bandwith > self.min_bandwidth, {"Bandwidth": f"{conv_to_GBps(bandwith):6.2f} GB/s"}
-
