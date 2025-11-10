@@ -9,7 +9,7 @@ from pydantic import BaseModel
 import ctypes, socket
 from vetnode.commands.scontrol.scontrol_command import ScontrolCommand
 from vetnode.evaluations.base_eval import BaseEval
-from vetnode.evaluations.models import BandwithSize, BinaryByteSize
+from vetnode.evaluations.models import BandwidthSize, BinaryByteSize
 import numpy as np
 import traceback
 import cuda.bindings.runtime as cudart
@@ -33,7 +33,7 @@ class NcclLibEval(BaseEval):
     payload: BinaryByteSize = '4 GB'
     method: Literal["allreduce"] = "allreduce"
     warmup: NCCLEvalWarmUp
-    min_bandwidth: BandwithSize = '15 GB/s'
+    min_bandwidth: BandwidthSize = '15 GB/s'
     
     def verify(self)->bool:
         libs =["libnccl.so"]   #add lib libnccl-net.so "libnvrtc.so"
@@ -167,5 +167,5 @@ class NcclLibEval(BaseEval):
         elapsedtime = end_time-start_time
    
         nccl.ncclCommDestroy(comm)
-        bandwith = (self.payload/elapsedtime) * (2*(world_size - 1) / world_size)   
-        return bandwith > self.min_bandwidth, {"Bandwidth": f"{conv_to_GBps(bandwith):6.2f} GB/s"}
+        bandwidth = (self.payload/elapsedtime) * (2*(world_size - 1) / world_size)   
+        return bandwidth > self.min_bandwidth, {"bandwidth": f"{conv_to_GBps(bandwidth):6.2f} GB/s"}

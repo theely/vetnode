@@ -11,7 +11,7 @@ from vetnode.commands.scontrol.scontrol_command import ScontrolCommand
 from vetnode.evaluations.base_eval import BaseEval
 import torch
 import torch.distributed as dist
-from vetnode.evaluations.models import BandwithSize, BinaryByteSize
+from vetnode.evaluations.models import BandwidthSize, BinaryByteSize
 
 
 # following the common networking hw spec convention which uses base 10, instead of 2 for bps/Bps (it makes speed look bigger than it is)
@@ -32,7 +32,7 @@ class NcclPytorchEval(BaseEval):
     payload: BinaryByteSize = '4 GB'
     method: Literal["broadcast","roundrobin","allreduce"] = "broadcast"
     warmup: NCCLEvalWarmUp
-    min_bandwidth: BandwithSize = '15 GB/s'
+    min_bandwidth: BandwidthSize = '15 GB/s'
     def verify(self)->bool:
         return True
 
@@ -77,17 +77,17 @@ class NcclPytorchEval(BaseEval):
         mesurment_matrix = []
         match self.method:
             case "allreduce":
-                bandwith = self.timed_allreduce(local_rank,rank,tensor,self.payload,world_size)
+                bandwidth = self.timed_allreduce(local_rank,rank,tensor,self.payload,world_size)
             case "roundrobin":
-                bandwith,mesurment_matrix = self.timed_roundrobin(local_rank,rank,tensor,self.payload,world_size)
+                bandwidth,mesurment_matrix = self.timed_roundrobin(local_rank,rank,tensor,self.payload,world_size)
             case "broadcast":
-                bandwith = self.timed_broadcast(local_rank,rank,tensor,self.payload,world_size)
+                bandwidth = self.timed_broadcast(local_rank,rank,tensor,self.payload,world_size)
             case _:
                 raise NotImplementedError("Bandwidth test method not implemented.")
         
         dist.destroy_process_group()
         
-        return bandwith > self.min_bandwidth, {"bandwith":f"{conv_to_GBps(bandwith):6.2f} GB/s", "rank":rank, "local_rank":local_rank, "world_size":world_size, "mesurment_matrix":mesurment_matrix}
+        return bandwidth > self.min_bandwidth, {"bandwidth":f"{conv_to_GBps(bandwidth):6.2f} GB/s", "rank":rank, "local_rank":local_rank, "world_size":world_size, "mesurment_matrix":mesurment_matrix}
     
 
     def timed_allreduce(self,local_rank,rank,tensor,size,ranks):
@@ -101,8 +101,8 @@ class NcclPytorchEval(BaseEval):
         end_event.record()
         torch.cuda.synchronize()
         duration = start_event.elapsed_time(end_event) / 1000
-        bandwith = size/duration        
-        return bandwith * (2*(ranks - 1) / ranks)
+        bandwidth = size/duration        
+        return bandwidth * (2*(ranks - 1) / ranks)
     
     def timed_roundrobin(self,local_rank,rank,tensor,size,ranks):
         start_event = torch.cuda.Event(enable_timing=True)
@@ -126,7 +126,7 @@ class NcclPytorchEval(BaseEval):
                     duration = start_event.elapsed_time(end_event) / 1000
                     if rank == i:
                         measurments = np.append(measurments, size/duration )
-                        metadata.append({"from":i, "to":j, "bandwith":f"{conv_to_GBps(size/duration):6.2f} GB/s"})     
+                        metadata.append({"from":i, "to":j, "bandwidth":f"{conv_to_GBps(size/duration):6.2f} GB/s"})     
         return np.min(measurments),metadata 
 
     def timed_broadcast(self,local_rank,rank,tensor,size,ranks):

@@ -29,7 +29,7 @@ class BinaryByteSize(ByteSize):
         'eb': 2**60,
     }
 
-class BandwithSize(ByteSize):
+class BandwidthSize(ByteSize):
     byte_sizes = {
         'b/s': 1,
         'kb/s': 2**10,
