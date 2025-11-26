@@ -166,6 +166,9 @@ class NcclLibEval(BaseEval):
         end_time = time.time()
         elapsedtime = end_time-start_time
    
+        cudart.cudaFree(dev_in)
+        cudart.cudaFree(dev_out)
+
         nccl.ncclCommDestroy(comm)
         bandwidth = (self.payload/elapsedtime) * (2*(world_size - 1) / world_size)   
         return bandwidth > self.min_bandwidth, {"bandwidth": f"{conv_to_GBps(bandwidth):6.2f} GB/s"}
