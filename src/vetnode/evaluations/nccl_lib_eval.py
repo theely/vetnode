@@ -104,7 +104,7 @@ class NcclLibEval(BaseEval):
         ncclRedOp_t = 0     # ncclSum
         
         uid = ncclUniqueId_t()
-        if rank==0:
+        if rank==0 and local_rank==0:
             nccl.ncclGetUniqueId(ctypes.byref(uid))            
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.bind(('0.0.0.0', 13333))
@@ -125,7 +125,7 @@ class NcclLibEval(BaseEval):
                     time.sleep(1)
                 
         cudart.cudaGetDevice()
-        (err,) = cudart.cudaSetDevice(0)
+        (err,) = cudart.cudaSetDevice(local_rank)
         assert err == 0
 
         err, stream = cudart.cudaStreamCreate()
