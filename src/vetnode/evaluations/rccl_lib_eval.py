@@ -163,7 +163,7 @@ class RcclLibEval(BaseEval):
         host = np.full(n, rank + 1, dtype=np.float32)
         status, dev_in = hip.hipMalloc(host.nbytes)
         status, dev_out = hip.hipMalloc(host.nbytes)
-        hip.hipMemcpy(dev_in,host.ctypes.data,host.nbytes,hip.hipMemcpyHostToDevice)
+        hip.hipMemcpy(dev_in,host.ctypes.data,host.nbytes,hip.hipMemcpyKind.hipMemcpyHostToDevice)
         for _ in range(self.warmup.runs):
             nccl.ncclAllReduce(dev_in, dev_out, n, ncclDataType_t, ncclRedOp_t, comm, stream_ptr)
 
@@ -173,7 +173,7 @@ class RcclLibEval(BaseEval):
         host = np.full(n, rank + 1, dtype=np.float32)
         status, dev_in = hip.cudaMalloc(host.nbytes)
         status, dev_out = hip.cudaMalloc(host.nbytes)
-        hip.cudaMemcpy(dev_in, host.ctypes.data, host.nbytes, hip.cudaMemcpyHostToDevice)
+        hip.cudaMemcpy(dev_in, host.ctypes.data, host.nbytes, hip.hipMemcpyKind.hipMemcpyDeviceToHost)
 
         start_time = time.time()
         result = nccl.ncclAllReduce(dev_in, dev_out, n, ncclDataType_t, ncclRedOp_t, comm, stream_ptr)
