@@ -51,7 +51,7 @@ class RcclLibEval(BaseEval):
             click.echo(f"Error executing check: {e}")
             traceback.print_exc()
 
-    def hip_check(self, call_result):
+    def hip_check(self,call_result):
         err = call_result[0]
         result = call_result[1:]
         if len(result) == 1:
@@ -118,7 +118,7 @@ class RcclLibEval(BaseEval):
         uid = rccl.ncclUniqueId()
         if rank==0 and local_rank==0:
             print(f"Get uniqueid: {rank}")
-            rccl.ncclGetUniqueId(uid)     
+            self.hip_check(rccl.ncclGetUniqueId(uid))     
             print(f"Broadcast uniqueid")       
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.bind(('0.0.0.0', 13333))
@@ -127,13 +127,13 @@ class RcclLibEval(BaseEval):
                 for _ in range(world_size-1):
                     conn, _ = s.accept()
                     with conn:
-                        conn.send(rccl.ncclUniqueId.fromPyobj(uid).getElementPtr())
+                        conn.send(uid.as_c_void_p())
         else:
             for i in range(5):
                 try:
                     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                         s.connect((master_node, 13333))
-                        s.recv_into(rccl.ncclUniqueId.fromPyobj(uid).getElementPtr())
+                        s.recv_into(uid.as_c_void_p())
                         break
                 except socket.error:
                     time.sleep(1)

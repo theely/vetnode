@@ -113,13 +113,13 @@ class NcclLibEval(BaseEval):
                 for _ in range(world_size-1):
                     conn, _ = s.accept()
                     with conn:
-                        conn.send(uid.as_c_void_p())
+                        conn.send(uid)
         else:
             for i in range(5):
                 try:
                     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                         s.connect((master_node, 13333))
-                        s.recv_into(uid.as_c_void_p())
+                        s.recv_into(uid)
                         break
                 except socket.error:
                     time.sleep(1)
