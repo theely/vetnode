@@ -147,9 +147,9 @@ class RcclLibEval(BaseEval):
         stream_ptr = ctypes.c_void_p(int(stream))
 
 
-        comm = ncclComm_t()
+        comm =  np.uint64(0)
         print(f"init rank: {rank}")
-        result, comm = rccl.ncclCommInitRank(world_size, uid, int(rank))
+        result, comm = rccl.ncclCommInitRank(comm,world_size, uid, int(rank))
         print(f"Comm initialized: {comm}")
 
         
