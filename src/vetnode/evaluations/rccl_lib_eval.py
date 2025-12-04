@@ -12,7 +12,8 @@ from vetnode.evaluations.base_eval import BaseEval
 from vetnode.evaluations.models import BandwidthSize, BinaryByteSize
 import numpy as np
 import traceback
-import cuda.bindings.runtime as cudart
+from hip import hiprt
+import ctypes
 
 # Define NCCL constants
 ncclUniqueId_t = ctypes.c_byte * 128
@@ -28,7 +29,7 @@ class RCCLEvalWarmUp(BaseModel):
 class RcclLibEval(BaseEval):
     name:str
     type: Literal["vetnode.evaluations.rccl_lib_eval.RcclLibEval"]
-    requirements: Literal[["cuda-python","numpy"]]
+    requirements: Literal[["hip","numpy"]]
     scheduler:  Literal["slurm"]
     payload: BinaryByteSize = '4 GB'
     method: Literal["allreduce"] = "allreduce"
@@ -124,12 +125,20 @@ class RcclLibEval(BaseEval):
                 except socket.error:
                     time.sleep(1)
                 
-        cudart.cudaGetDevice()
-        (err,) = cudart.cudaSetDevice(local_rank)
+    
+
+        # Get current device
+        err, device = hiprt.hipGetDevice()
         assert err == 0
 
-        err, stream = cudart.cudaStreamCreate()
+        # Set device
+        err = hiprt.hipSetDevice(local_rank)
         assert err == 0
+
+        # Create a stream
+        err, stream = hiprt.hipStreamCreate()
+        assert err == 0
+
         stream_ptr = ctypes.c_void_p(int(stream))
 
 
@@ -142,9 +151,9 @@ class RcclLibEval(BaseEval):
         # Warm-up phase
         n = self.warmup.payload//4 #np.float32 is 4 baytes
         host = np.full(n, rank + 1, dtype=np.float32)
-        status, dev_in = cudart.cudaMalloc(host.nbytes)
-        status, dev_out = cudart.cudaMalloc(host.nbytes)
-        cudart.cudaMemcpy(dev_in, host.ctypes.data, host.nbytes, cudart.cudaMemcpyKind.cudaMemcpyHostToDevice)
+        status, dev_in = hiprt.hipMalloc(host.nbytes)
+        status, dev_out = hiprt.hipMalloc(host.nbytes)
+        hiprt.hipMemcpy(dev_in,host.ctypes.data,host.nbytes,hiprt.hipMemcpyHostToDevice)
         for _ in range(self.warmup.runs):
             nccl.ncclAllReduce(dev_in, dev_out, n, ncclDataType_t, ncclRedOp_t, comm, stream_ptr)
 
@@ -152,9 +161,9 @@ class RcclLibEval(BaseEval):
         n = self.payload//4 #np.float32 is 4 baytes
         
         host = np.full(n, rank + 1, dtype=np.float32)
-        status, dev_in = cudart.cudaMalloc(host.nbytes)
-        status, dev_out = cudart.cudaMalloc(host.nbytes)
-        cudart.cudaMemcpy(dev_in, host.ctypes.data, host.nbytes, cudart.cudaMemcpyKind.cudaMemcpyHostToDevice)
+        status, dev_in = hiprt.cudaMalloc(host.nbytes)
+        status, dev_out = hiprt.cudaMalloc(host.nbytes)
+        hiprt.cudaMemcpy(dev_in, host.ctypes.data, host.nbytes, hiprt.cudaMemcpyHostToDevice)
 
         start_time = time.time()
         result = nccl.ncclAllReduce(dev_in, dev_out, n, ncclDataType_t, ncclRedOp_t, comm, stream_ptr)
@@ -162,12 +171,12 @@ class RcclLibEval(BaseEval):
             error_str = nccl.ncclGetErrorString(result)
             return False, {"error": f"NCCL error: {error_str.decode('utf-8')}"}
         
-        cudart.cudaStreamSynchronize(stream)
+        hiprt.cudaStreamSynchronize(stream)
         end_time = time.time()
         elapsedtime = end_time-start_time
    
-        cudart.cudaFree(dev_in)
-        cudart.cudaFree(dev_out)
+        hiprt.hipFree(dev_in)
+        hiprt.hipFree(dev_out)
 
         nccl.ncclCommDestroy(comm)
         bandwidth = (self.payload/elapsedtime) * (2*(world_size - 1) / world_size)   
