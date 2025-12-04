@@ -29,7 +29,7 @@ class RCCLEvalWarmUp(BaseModel):
 class RcclLibEval(BaseEval):
     name:str
     type: Literal["vetnode.evaluations.rccl_lib_eval.RcclLibEval"]
-    requirements: Literal[["hip","numpy"]]
+    requirements: Literal[["hip-python","numpy"]]
     scheduler:  Literal["slurm"]
     payload: BinaryByteSize = '4 GB'
     method: Literal["allreduce"] = "allreduce"
