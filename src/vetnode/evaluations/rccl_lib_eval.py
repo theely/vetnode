@@ -12,7 +12,7 @@ from vetnode.evaluations.base_eval import BaseEval
 from vetnode.evaluations.models import BandwidthSize, BinaryByteSize
 import numpy as np
 import traceback
-from hip import hip as hiprt
+from hip import hip as hiprt, rccl
 import ctypes
 
 # Define NCCL constants
@@ -50,6 +50,17 @@ class RcclLibEval(BaseEval):
         except Exception as e:
             click.echo(f"Error executing check: {e}")
             traceback.print_exc()
+
+    def hip_check(self, call_result):
+        err = call_result[0]
+        result = call_result[1:]
+        if len(result) == 1:
+            result = result[0]
+        if isinstance(err, hiprt.hipError_t) and err != hiprt.hipError_t.hipSuccess:
+            raise RuntimeError(str(err))
+        if isinstance(err, rccl.ncclResult_t) and err != rccl.ncclResult_t.ncclSuccess:
+            raise RuntimeError(str(err))
+        return result
 
 
     def _check(self)->tuple[bool,dict]:
@@ -128,16 +139,10 @@ class RcclLibEval(BaseEval):
     
 
         # Get current device
-        err, device = hiprt.hipGetDevice()
-        assert err == 0
+        device=self.hip_check( hiprt.hipGetDevice())
 
-        # Set device
-        err = hiprt.hipSetDevice(local_rank)
-        assert err == 0
-
-        # Create a stream
-        err, stream = hiprt.hipStreamCreate()
-        assert err == 0
+        self.hip_check(hiprt.hipSetDevice(local_rank))
+        stream = self.hip_check(hiprt.hipStreamCreate())
 
         stream_ptr = ctypes.c_void_p(int(stream))
 
