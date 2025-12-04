@@ -36,7 +36,7 @@ class RcclLibEval(BaseEval):
     min_bandwidth: BandwidthSize = '15 GB/s'
     
     def verify(self)->bool:
-        libs =["librccl.so"]   #add lib librccl-net.so "libnvrtc.so"
+        libs =["/opt/rocm/lib/librccl.so"]   #add lib librccl-net.so "libnvrtc.so"
         for lib in libs:
             libc = ctypes.CDLL(lib)
             if libc is None:
@@ -67,7 +67,7 @@ class RcclLibEval(BaseEval):
             case _:
                 raise NotImplementedError("Support for the rquested scheduler has not been implemented.")
 
-        nccl = ctypes.cdll.LoadLibrary('librccl.so')
+        nccl = ctypes.cdll.LoadLibrary('/opt/rocm/lib/librccl.so')
         
 
         #TODO: re-implement following: https://github.com/vllm-project/vllm/blob/main/vllm/distributed/device_communicators/pynccl_wrapper.py#L49
