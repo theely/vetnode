@@ -148,7 +148,7 @@ class RcclLibEval(BaseEval):
 
 
         comm = ncclComm_t()
-        result = nccl.ncclCommInitRank(ctypes.byref(comm), world_size, uid, rank)
+        result = nccl.ncclCommInitRank(ctypes.byref(comm), world_size, uid, np.int32(rank))
         if result != 0:
             error_str = nccl.ncclGetErrorString(result)
             return False, {"error": f"NCCL error: {error_str.decode('utf-8')}"}
