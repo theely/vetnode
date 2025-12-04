@@ -115,9 +115,11 @@ class RcclLibEval(BaseEval):
         ncclDataType_t = 7  # ncclFloat32
         ncclRedOp_t = 0     # ncclSum
         
-        uid = ncclUniqueId_t()
+        uid = rccl.ncclUniqueId()
         if rank==0 and local_rank==0:
-            nccl.ncclGetUniqueId(ctypes.byref(uid))            
+            print(f"Get uniqueid: {rank}")
+            rccl.ncclGetUniqueId(uid)     
+            print(f"Broadcast uniqueid")       
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.bind(('0.0.0.0', 13333))
                 s.settimeout(30) #wait 30s for clients to connect
@@ -147,9 +149,8 @@ class RcclLibEval(BaseEval):
         stream_ptr = ctypes.c_void_p(int(stream))
 
 
-        comm =  np.uint64(0)
         print(f"init rank: {rank}")
-        result, comm = rccl.ncclCommInitRank(comm,world_size, uid, int(rank))
+        result, comm = rccl.ncclCommInitRank(world_size, uid, int(rank))
         print(f"Comm initialized: {comm}")
 
         
