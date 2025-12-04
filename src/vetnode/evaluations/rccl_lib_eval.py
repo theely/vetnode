@@ -12,7 +12,7 @@ from vetnode.evaluations.base_eval import BaseEval
 from vetnode.evaluations.models import BandwidthSize, BinaryByteSize
 import numpy as np
 import traceback
-from hip import hip as hiprt, rccl
+from hip import hip, rccl
 import ctypes
 
 # Define NCCL constants
@@ -56,7 +56,7 @@ class RcclLibEval(BaseEval):
         result = call_result[1:]
         if len(result) == 1:
             result = result[0]
-        if isinstance(err, hiprt.hipError_t) and err != hiprt.hipError_t.hipSuccess:
+        if isinstance(err, hip.hipError_t) and err != hip.hipError_t.hipSuccess:
             raise RuntimeError(str(err))
         if isinstance(err, rccl.ncclResult_t) and err != rccl.ncclResult_t.ncclSuccess:
             raise RuntimeError(str(err))
@@ -139,26 +139,31 @@ class RcclLibEval(BaseEval):
     
 
         # Get current device
-        device=self.hip_check( hiprt.hipGetDevice())
+        device=self.hip_check( hip.hipGetDevice())
 
-        self.hip_check(hiprt.hipSetDevice(np.int32(local_rank)))
-        stream = self.hip_check(hiprt.hipStreamCreate())
+        self.hip_check(hip.hipSetDevice(np.int32(local_rank)))
+        stream = self.hip_check(hip.hipStreamCreate())
 
         stream_ptr = ctypes.c_void_p(int(stream))
 
 
         comm = ncclComm_t()
-        result = nccl.ncclCommInitRank(ctypes.byref(comm), world_size, uid, np.int8(rank))
-        if result != 0:
-            error_str = nccl.ncclGetErrorString(result)
-            return False, {"error": f"NCCL error: {error_str.decode('utf-8')}"}
+        print(f"init rank: {rank}")
+        result, comm = rccl.ncclCommInitRank(world_size, uid, int(rank))
+        print("Comm initialized")
+
+        
+        #result = nccl.ncclCommInitRank(ctypes.byref(comm), world_size, uid, int(rank))
+        #if result != 0:
+        #    error_str = nccl.ncclGetErrorString(result)
+        #    return False, {"error": f"NCCL error: {error_str.decode('utf-8')}"}
         
         # Warm-up phase
         n = self.warmup.payload//4 #np.float32 is 4 baytes
         host = np.full(n, rank + 1, dtype=np.float32)
-        status, dev_in = hiprt.hipMalloc(host.nbytes)
-        status, dev_out = hiprt.hipMalloc(host.nbytes)
-        hiprt.hipMemcpy(dev_in,host.ctypes.data,host.nbytes,hiprt.hipMemcpyHostToDevice)
+        status, dev_in = hip.hipMalloc(host.nbytes)
+        status, dev_out = hip.hipMalloc(host.nbytes)
+        hip.hipMemcpy(dev_in,host.ctypes.data,host.nbytes,hip.hipMemcpyHostToDevice)
         for _ in range(self.warmup.runs):
             nccl.ncclAllReduce(dev_in, dev_out, n, ncclDataType_t, ncclRedOp_t, comm, stream_ptr)
 
@@ -166,9 +171,9 @@ class RcclLibEval(BaseEval):
         n = self.payload//4 #np.float32 is 4 baytes
         
         host = np.full(n, rank + 1, dtype=np.float32)
-        status, dev_in = hiprt.cudaMalloc(host.nbytes)
-        status, dev_out = hiprt.cudaMalloc(host.nbytes)
-        hiprt.cudaMemcpy(dev_in, host.ctypes.data, host.nbytes, hiprt.cudaMemcpyHostToDevice)
+        status, dev_in = hip.cudaMalloc(host.nbytes)
+        status, dev_out = hip.cudaMalloc(host.nbytes)
+        hip.cudaMemcpy(dev_in, host.ctypes.data, host.nbytes, hip.cudaMemcpyHostToDevice)
 
         start_time = time.time()
         result = nccl.ncclAllReduce(dev_in, dev_out, n, ncclDataType_t, ncclRedOp_t, comm, stream_ptr)
@@ -176,12 +181,12 @@ class RcclLibEval(BaseEval):
             error_str = nccl.ncclGetErrorString(result)
             return False, {"error": f"NCCL error: {error_str.decode('utf-8')}"}
         
-        hiprt.cudaStreamSynchronize(stream)
+        hip.cudaStreamSynchronize(stream)
         end_time = time.time()
         elapsedtime = end_time-start_time
    
-        hiprt.hipFree(dev_in)
-        hiprt.hipFree(dev_out)
+        hip.hipFree(dev_in)
+        hip.hipFree(dev_out)
 
         nccl.ncclCommDestroy(comm)
         bandwidth = (self.payload/elapsedtime) * (2*(world_size - 1) / world_size)   
