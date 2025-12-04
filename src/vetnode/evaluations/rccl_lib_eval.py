@@ -12,7 +12,7 @@ from vetnode.evaluations.base_eval import BaseEval
 from vetnode.evaluations.models import BandwidthSize, BinaryByteSize
 import numpy as np
 import traceback
-from hip import hiprt
+from hip import hip as hiprt
 import ctypes
 
 # Define NCCL constants
@@ -29,7 +29,7 @@ class RCCLEvalWarmUp(BaseModel):
 class RcclLibEval(BaseEval):
     name:str
     type: Literal["vetnode.evaluations.rccl_lib_eval.RcclLibEval"]
-    requirements: Literal[["hip-python","numpy"]]
+    requirements: Literal[[['hip-python~=7.0.2','--index-url','https://test.pypi.org/simple'] ,"numpy"]]
     scheduler:  Literal["slurm"]
     payload: BinaryByteSize = '4 GB'
     method: Literal["allreduce"] = "allreduce"
