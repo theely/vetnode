@@ -165,7 +165,7 @@ class RcclLibEval(BaseEval):
         status, dev_out = hip.hipMalloc(host.nbytes)
         hip.hipMemcpy(dev_in,host.ctypes.data,host.nbytes,hip.hipMemcpyKind.hipMemcpyHostToDevice)
         for _ in range(self.warmup.runs):
-            rccl.ncclAllReduce(dev_in, dev_out, n, ncclDataType_t, ncclRedOp_t, comm, stream_ptr)
+            rccl.ncclAllReduce(dev_in, dev_out, n, rccl.ncclDataType_t.ncclFloat32, rccl.ncclRedOp_t.ncclSum, comm, stream_ptr)
 
         # Actual measurement
         n = self.payload//4 #np.float32 is 4 baytes
@@ -177,7 +177,7 @@ class RcclLibEval(BaseEval):
 
         start_time = time.time()
 
-        result = rccl.ncclAllReduce(dev_in, dev_out, n, ncclDataType_t, ncclRedOp_t, comm, stream_ptr)
+        result = rccl.ncclAllReduce(dev_in, dev_out, n, rccl.ncclDataType_t.ncclFloat32, rccl.ncclRedOp_t.ncclSum, comm, stream_ptr)
         if result != 0:
             error_str = nccl.ncclGetErrorString(result)
             return False, {"error": f"NCCL error: {error_str.decode('utf-8')}"}
