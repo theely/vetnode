@@ -141,7 +141,7 @@ class RcclLibEval(BaseEval):
         # Get current device
         device=self.hip_check( hiprt.hipGetDevice())
 
-        self.hip_check(hiprt.hipSetDevice(local_rank))
+        self.hip_check(hiprt.hipSetDevice(np.int32(local_rank)))
         stream = self.hip_check(hiprt.hipStreamCreate())
 
         stream_ptr = ctypes.c_void_p(int(stream))
