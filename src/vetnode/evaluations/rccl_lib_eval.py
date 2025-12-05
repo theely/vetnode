@@ -80,9 +80,7 @@ class RcclLibEval(BaseEval):
         
         uid = ncclUniqueId_t()
         if rank==0 and local_rank==0:
-            print(f"Get uniqueid: {rank}")
-            self.hip_check(rccl.ncclGetUniqueId(uid))     
-            print(f"Broadcast uniqueid")       
+            self.hip_check(rccl.ncclGetUniqueId(uid))           
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.bind(('0.0.0.0', 13333))
                 s.settimeout(30) #wait 30s for clients to connect
