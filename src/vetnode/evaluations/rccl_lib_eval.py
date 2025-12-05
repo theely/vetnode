@@ -174,7 +174,7 @@ class RcclLibEval(BaseEval):
         host = np.full(n, rank + 1, dtype=np.float32)
         status, dev_in = hip.hipMalloc(host.nbytes)
         status, dev_out = hip.hipMalloc(host.nbytes)
-        hip.cudaMemcpy(dev_in, host.ctypes.data, host.nbytes, hip.hipMemcpyKind.hipMemcpyDeviceToHost)
+        hip.hipMemcpy(dev_in, host.ctypes.data, host.nbytes, hip.hipMemcpyKind.hipMemcpyDeviceToHost)
 
         start_time = time.time()
 
@@ -183,13 +183,13 @@ class RcclLibEval(BaseEval):
             error_str = nccl.ncclGetErrorString(result)
             return False, {"error": f"NCCL error: {error_str.decode('utf-8')}"}
         
-        hip.cudaStreamSynchronize(stream)
+        hip.hipStreamSynchronize(stream)
         end_time = time.time()
         elapsedtime = end_time-start_time
    
         hip.hipFree(dev_in)
         hip.hipFree(dev_out)
 
-        nccl.ncclCommDestroy(comm)
+        rccl.ncclCommDestroy(comm)
         bandwidth = (self.payload/elapsedtime) * (2*(world_size - 1) / world_size)   
         return bandwidth > self.min_bandwidth, {"bandwidth": f"{conv_to_GBps(bandwidth):6.2f} GB/s"}
