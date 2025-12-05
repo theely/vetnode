@@ -1,6 +1,5 @@
 
 import asyncio
-import base64
 import os
 import time
 from typing import Literal
@@ -13,7 +12,6 @@ from vetnode.evaluations.models import BandwidthSize, BinaryByteSize
 import numpy as np
 import traceback
 from hip import hip, rccl
-import ctypes
 
 # Define NCCL constants
 ncclUniqueId_t = ctypes.c_byte * 128
@@ -79,41 +77,6 @@ class RcclLibEval(BaseEval):
             case _:
                 raise NotImplementedError("Support for the rquested scheduler has not been implemented.")
 
-        nccl = ctypes.cdll.LoadLibrary('/opt/rocm/lib/librccl.so')
-        
-
-        #TODO: re-implement following: https://github.com/vllm-project/vllm/blob/main/vllm/distributed/device_communicators/pynccl_wrapper.py#L49
-
-        # Define API prototypes
-        nccl.ncclGetUniqueId.restype = ctypes.c_int
-        nccl.ncclGetUniqueId.argtypes = [ctypes.POINTER(ncclUniqueId_t)]
-
-        nccl.ncclCommInitRank.restype = ctypes.c_int
-        nccl.ncclCommInitRank.argtypes = [ctypes.POINTER(ncclComm_t), ctypes.c_int, ncclUniqueId_t, ctypes.c_int]
-
-        nccl.ncclAllReduce.restype = ctypes.c_int
-        nccl.ncclAllReduce.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_size_t,
-                                    ctypes.c_int, ctypes.c_int, ncclComm_t, cudaStream_t]
-        
-        nccl.ncclGetErrorString.restype = ctypes.c_char_p
-        nccl.ncclGetErrorString.argtypes = [ctypes.c_int]
-        
-        nccl.ncclBroadcast.restype = ctypes.c_int
-        nccl.ncclBroadcast.argtypes = [
-            ctypes.c_void_p,  # sendbuf
-            ctypes.c_void_p,  # recvbuf
-            ctypes.c_size_t,  # count
-            ctypes.c_int,     # datatype
-            ctypes.c_int,     # root
-            ncclComm_t,       # comm
-            cudaStream_t,  # stream
-        ]
-
-        nccl.ncclCommDestroy.restype = ctypes.c_int
-        nccl.ncclCommDestroy.argtypes = [ncclComm_t]
-                
-        ncclDataType_t = 7  # ncclFloat32
-        ncclRedOp_t = 0     # ncclSum
         
         uid = ncclUniqueId_t()
         if rank==0 and local_rank==0:
@@ -145,9 +108,6 @@ class RcclLibEval(BaseEval):
 
         self.hip_check(hip.hipSetDevice(np.int32(local_rank)))
         stream = self.hip_check(hip.hipStreamCreate())
-
-        stream_ptr = ctypes.c_void_p(int(stream))
-
 
         print(f"init rank: {rank}")
         result, comm = rccl.ncclCommInitRank(world_size, uid, int(rank))
