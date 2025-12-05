@@ -115,7 +115,7 @@ class RcclLibEval(BaseEval):
         ncclDataType_t = 7  # ncclFloat32
         ncclRedOp_t = 0     # ncclSum
         
-        uid = rccl.ncclUniqueId()
+        uid = ncclUniqueId_t()
         if rank==0 and local_rank==0:
             print(f"Get uniqueid: {rank}")
             self.hip_check(rccl.ncclGetUniqueId(uid))     
@@ -127,13 +127,13 @@ class RcclLibEval(BaseEval):
                 for _ in range(world_size-1):
                     conn, _ = s.accept()
                     with conn:
-                        conn.send(uid.as_c_void_p())
+                        conn.send(uid)
         else:
             for i in range(5):
                 try:
                     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                         s.connect((master_node, 13333))
-                        s.recv_into(uid.as_c_void_p())
+                        s.recv_into(uid)
                         break
                 except socket.error:
                     time.sleep(1)
@@ -172,8 +172,8 @@ class RcclLibEval(BaseEval):
         n = self.payload//4 #np.float32 is 4 baytes
         
         host = np.full(n, rank + 1, dtype=np.float32)
-        status, dev_in = hip.cudaMalloc(host.nbytes)
-        status, dev_out = hip.cudaMalloc(host.nbytes)
+        status, dev_in = hip.hipMalloc(host.nbytes)
+        status, dev_out = hip.hipMalloc(host.nbytes)
         hip.cudaMemcpy(dev_in, host.ctypes.data, host.nbytes, hip.hipMemcpyKind.hipMemcpyDeviceToHost)
 
         start_time = time.time()
