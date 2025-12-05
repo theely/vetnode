@@ -101,7 +101,6 @@ class RcclLibEval(BaseEval):
                 except socket.error:
                     time.sleep(1)
                 
-    
 
         # Get current device
         device=self.hip_check( hip.hipGetDevice())
@@ -109,15 +108,8 @@ class RcclLibEval(BaseEval):
         self.hip_check(hip.hipSetDevice(np.int32(local_rank)))
         stream = self.hip_check(hip.hipStreamCreate())
 
-        print(f"init rank: {rank}")
         result, comm = rccl.ncclCommInitRank(world_size, uid, int(rank))
-        print(f"Comm initialized: {comm}")
 
-        
-        #result = nccl.ncclCommInitRank(ctypes.byref(comm), world_size, uid, int(rank))
-        #if result != 0:
-        #    error_str = nccl.ncclGetErrorString(result)
-        #    return False, {"error": f"NCCL error: {error_str.decode('utf-8')}"}
         
         # Warm-up phase
         n = self.warmup.payload//4 #np.float32 is 4 baytes
