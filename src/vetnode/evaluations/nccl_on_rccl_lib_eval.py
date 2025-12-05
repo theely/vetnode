@@ -12,7 +12,7 @@ from vetnode.evaluations.base_eval import BaseEval
 from vetnode.evaluations.models import BandwidthSize, BinaryByteSize
 import numpy as np
 import traceback
-import cuda.bindings.runtime as cudart
+from cuda import cudart
 
 # Define NCCL constants
 ncclUniqueId_t = ctypes.c_byte * 128
@@ -67,7 +67,7 @@ class NcclLibEval(BaseEval):
             case _:
                 raise NotImplementedError("Support for the rquested scheduler has not been implemented.")
 
-        nccl = ctypes.cdll.LoadLibrary('libnccl.so')
+        nccl = ctypes.cdll.LoadLibrary("/opt/rocm/lib/librccl.so")
         
 
         #TODO: re-implement following: https://github.com/vllm-project/vllm/blob/main/vllm/distributed/device_communicators/pynccl_wrapper.py#L49
