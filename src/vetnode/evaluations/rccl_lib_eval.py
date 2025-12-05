@@ -178,11 +178,8 @@ class RcclLibEval(BaseEval):
 
         start_time = time.time()
 
-        result = rccl.ncclAllReduce(dev_in, dev_out, n, rccl.ncclDataType_t.ncclFloat32, rccl.ncclRedOp_t.ncclSum, comm, stream)
-        if result != 0:
-            error_str = nccl.ncclGetErrorString(result)
-            return False, {"error": f"NCCL error: {error_str.decode('utf-8')}"}
-        
+        self.hip_check(rccl.ncclAllReduce(dev_in, dev_out, n, rccl.ncclDataType_t.ncclFloat32, rccl.ncclRedOp_t.ncclSum, comm, stream))
+
         hip.hipStreamSynchronize(stream)
         end_time = time.time()
         elapsedtime = end_time-start_time
