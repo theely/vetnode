@@ -148,6 +148,13 @@ class NcclLibEval(BaseEval):
         for _ in range(self.warmup.runs):
             nccl.ncclAllReduce(dev_in, dev_out, n, ncclDataType_t, ncclRedOp_t, comm, stream_ptr)
 
+        # Recreate comm to test specific issue with NCCL comm destroy
+        nccl.ncclCommDestroy(comm)
+        result = nccl.ncclCommInitRank(ctypes.byref(comm), world_size, uid, rank)
+        if result != 0:
+            error_str = nccl.ncclGetErrorString(result)
+            return False, {"error": f"NCCL error: {error_str.decode('utf-8')}"}
+
         # Actual measurement
         n = self.payload//4 #np.float32 is 4 baytes
         
