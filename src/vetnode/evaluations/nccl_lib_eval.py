@@ -104,8 +104,10 @@ class NcclLibEval(BaseEval):
         ncclRedOp_t = 0     # ncclSum
         
         uid = ncclUniqueId_t()
+        uid_warmup = ncclUniqueId_t()
         if rank==0 and local_rank==0:
-            nccl.ncclGetUniqueId(ctypes.byref(uid))            
+            nccl.ncclGetUniqueId(ctypes.byref(uid))    
+            nccl.ncclGetUniqueId(ctypes.byref(uid_warmup))            
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.bind(('0.0.0.0', 13333))
                 s.settimeout(30) #wait 30s for clients to connect
@@ -114,12 +116,14 @@ class NcclLibEval(BaseEval):
                     conn, _ = s.accept()
                     with conn:
                         conn.send(uid)
+                        conn.send(uid_warmup)
         else:
             for i in range(5):
                 try:
                     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                         s.connect((master_node, 13333))
                         s.recv_into(uid)
+                        s.recv_into(uid_warmup)
                         break
                 except socket.error:
                     time.sleep(1)
@@ -134,7 +138,7 @@ class NcclLibEval(BaseEval):
 
 
         comm = ncclComm_t()
-        result = nccl.ncclCommInitRank(ctypes.byref(comm), world_size, uid, rank)
+        result = nccl.ncclCommInitRank(ctypes.byref(comm), world_size, uid_warmup, rank)
         if result != 0:
             error_str = nccl.ncclGetErrorString(result)
             return False, {"error": f"NCCL error: {error_str.decode('utf-8')}"}
