@@ -30,7 +30,7 @@ class NcclPytorchEval(BaseEval):
     requirements: Literal[[['torch','--index-url','https://download.pytorch.org/whl/cu129'],"numpy"],[['torch','--index-url','https://download.pytorch.org/whl/cu130'],"numpy"],[['torch','--index-url','https://download.pytorch.org/whl/nightly/rocm7.1'],"numpy"]]
     scheduler:  Literal["slurm","openPBS"]
     payload: BinaryByteSize = '4 GB'
-    method: Literal["broadcast","roundrobin","allreduce"] = "broadcast"
+    method: Literal["broadcast","roundrobin","allreduce","gather"] = "broadcast"
     warmup: NCCLEvalWarmUp
     min_bandwidth: BandwidthSize = '15 GB/s'
     def verify(self)->bool:
@@ -75,6 +75,7 @@ class NcclPytorchEval(BaseEval):
         # /4 is for 4 bytes in fp32
         tensor = torch.rand(self.payload//4, 1, dtype=torch.float32).cuda(local_rank)
         mesurment_matrix = []
+        
         match self.method:
             case "allreduce":
                 bandwidth = self.timed_allreduce(local_rank,rank,tensor,self.payload,world_size)
@@ -82,6 +83,8 @@ class NcclPytorchEval(BaseEval):
                 bandwidth,mesurment_matrix = self.timed_roundrobin(local_rank,rank,tensor,self.payload,world_size)
             case "broadcast":
                 bandwidth = self.timed_broadcast(local_rank,rank,tensor,self.payload,world_size)
+            case "gather":
+                bandwidth = self.timed_gather(local_rank,rank,tensor,self.payload,world_size)
             case _:
                 raise NotImplementedError("Bandwidth test method not implemented.")
         
@@ -89,7 +92,29 @@ class NcclPytorchEval(BaseEval):
         
         return bandwidth > self.min_bandwidth, {"bandwidth":f"{conv_to_GBps(bandwidth):6.2f} GB/s", "rank":rank, "local_rank":local_rank, "world_size":world_size, "mesurment_matrix":mesurment_matrix}
     
+    def timed_gather(self,local_rank,rank,tensor,size,ranks):
+        
+        start_event = torch.cuda.Event(enable_timing=True)
+        end_event = torch.cuda.Event(enable_timing=True)
+        
+        dist.barrier(device_ids=[local_rank])
+        start_event.record()
+        
+        if rank == 0:
+            gather_list = [torch.zeros_like(tensor) for _ in range(size)]
+            dist.gather(tensor, gather_list, dst=0)
+        else:
+            gather_list = None
 
+        dist.gather(tensor, gather_list, dst=0)
+
+        end_event.record()
+        torch.cuda.synchronize()
+        duration = start_event.elapsed_time(end_event) / 1000
+        bandwidth = size/duration        
+        return bandwidth * (ranks - 1)
+
+    
     def timed_allreduce(self,local_rank,rank,tensor,size,ranks):
         
         start_event = torch.cuda.Event(enable_timing=True)
@@ -143,6 +168,6 @@ class NcclPytorchEval(BaseEval):
                 duration = start_event.elapsed_time(end_event) / 1000
                 if rank == i:
                     bandwidth= size/duration  
-        return bandwidth 
+        return bandwidth * (ranks - 1)
 
 
