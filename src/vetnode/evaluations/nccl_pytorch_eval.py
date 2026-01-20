@@ -102,7 +102,7 @@ class NcclPytorchEval(BaseEval):
         dist.barrier(device_ids=[local_rank])
         start_event.record()
         if rank == 0:
-            gather_list = [torch.zeros_like(x) for _ in range(size)]
+            gather_list = [torch.zeros_like(x) for _ in range(ranks)]
         else:
             gather_list = None
 
