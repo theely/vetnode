@@ -97,16 +97,14 @@ class NcclPytorchEval(BaseEval):
         start_event = torch.cuda.Event(enable_timing=True)
         end_event = torch.cuda.Event(enable_timing=True)
         
-        x = torch.tensor([rank], device="cuda")
-
         dist.barrier(device_ids=[local_rank])
         start_event.record()
         if rank == 0:
-            gather_list = [torch.zeros_like(x) for _ in range(ranks)]
+            gather_list = [torch.zeros_like(tensor) for _ in range(ranks)]
         else:
             gather_list = None
 
-        dist.gather(x, gather_list, dst=0)
+        dist.gather(tensor, gather_list, dst=0)
 
         end_event.record()
         torch.cuda.synchronize()
