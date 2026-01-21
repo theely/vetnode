@@ -86,9 +86,7 @@ class NcclPytorchEval(BaseEval):
             case "gather":
                 bandwidth = self.timed_gather(local_rank,rank,tensor,self.payload,world_size)
             case "allreduce-gather":
-                tensor_b = tensor.detach().clone()
-                self.timed_allreduce(local_rank,rank,tensor,self.payload,world_size)
-                bandwidth = self.timed_gather(local_rank,rank,tensor_b,self.payload,world_size)
+                bandwidth = self.timed_allreduce_gather(local_rank,rank,tensor,self.payload,world_size)
             case _:
                 raise NotImplementedError("Bandwidth test method not implemented.")
         
@@ -96,12 +94,39 @@ class NcclPytorchEval(BaseEval):
         
         return bandwidth > self.min_bandwidth, {"bandwidth":f"{conv_to_GBps(bandwidth):6.2f} GB/s", "rank":rank, "local_rank":local_rank, "world_size":world_size, "mesurment_matrix":mesurment_matrix}
     
+    def timed_allreduce_gather(self,local_rank,rank,tensor,size,ranks):
+        
+        start_event = torch.cuda.Event(enable_timing=True)
+        end_event = torch.cuda.Event(enable_timing=True)
+        tensor_b = tensor.detach().clone()
+
+        dist.all_reduce(tensor_b,op=dist.ReduceOp.SUM)
+
+        start_event.record()
+        if rank == 0:
+            gather_list = [torch.zeros_like(tensor) for _ in range(ranks)]
+        else:
+            gather_list = None
+
+        dist.gather(tensor, gather_list, dst=0)
+
+        end_event.record()
+
+        dist.barrier()
+        dist.destroy_process_group()
+        torch.cuda.synchronize()
+        torch.cuda.empty_cache()
+        duration = start_event.elapsed_time(end_event) / 1000
+        bandwidth = size/duration        
+        return bandwidth * (ranks - 1)
+    
     def timed_gather(self,local_rank,rank,tensor,size,ranks):
         
         start_event = torch.cuda.Event(enable_timing=True)
         end_event = torch.cuda.Event(enable_timing=True)
         
         dist.barrier(device_ids=[local_rank])
+
         start_event.record()
         if rank == 0:
             gather_list = [torch.zeros_like(tensor) for _ in range(ranks)]
