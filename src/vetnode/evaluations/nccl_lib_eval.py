@@ -159,6 +159,10 @@ class NcclLibEval(BaseEval):
             error_str = nccl.ncclGetErrorString(result)
             return False, {"error": f"NCCL error: {error_str.decode('utf-8')}"}
 
+        # Re-warm-up
+        for _ in range(self.warmup.runs):
+            nccl.ncclAllReduce(dev_in, dev_out, n, ncclDataType_t, ncclRedOp_t, comm, stream_ptr)    
+
         # Actual measurement
         n = self.payload//4 #np.float32 is 4 baytes
         
