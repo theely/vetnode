@@ -30,7 +30,7 @@ class NcclPytorchEval(BaseEval):
     requirements: Literal[[['torch','--index-url','https://download.pytorch.org/whl/cu129'],"numpy"],[['torch','--index-url','https://download.pytorch.org/whl/cu130'],"numpy"],[['torch','--index-url','https://download.pytorch.org/whl/nightly/rocm7.1'],"numpy"]]
     scheduler:  Literal["slurm","openPBS"]
     payload: BinaryByteSize = '4 GB'
-    method: Literal["broadcast","roundrobin","allreduce","gather"] = "broadcast"
+    method: Literal["broadcast","roundrobin","allreduce","gather","allreduce-gather"] = "broadcast"
     warmup: NCCLEvalWarmUp
     min_bandwidth: BandwidthSize = '15 GB/s'
     def verify(self)->bool:
@@ -84,6 +84,9 @@ class NcclPytorchEval(BaseEval):
             case "broadcast":
                 bandwidth = self.timed_broadcast(local_rank,rank,tensor,self.payload,world_size)
             case "gather":
+                bandwidth = self.timed_gather(local_rank,rank,tensor,self.payload,world_size)
+            case "allreduce-gather":
+                self.timed_allreduce(local_rank,rank,tensor,self.payload,world_size)
                 bandwidth = self.timed_gather(local_rank,rank,tensor,self.payload,world_size)
             case _:
                 raise NotImplementedError("Bandwidth test method not implemented.")
