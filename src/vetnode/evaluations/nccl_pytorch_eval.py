@@ -113,7 +113,6 @@ class NcclPytorchEval(BaseEval):
         end_event.record()
 
         dist.barrier()
-        dist.destroy_process_group()
         torch.cuda.synchronize()
         torch.cuda.empty_cache()
         duration = start_event.elapsed_time(end_event) / 1000
