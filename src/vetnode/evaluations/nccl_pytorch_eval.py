@@ -86,8 +86,9 @@ class NcclPytorchEval(BaseEval):
             case "gather":
                 bandwidth = self.timed_gather(local_rank,rank,tensor,self.payload,world_size)
             case "allreduce-gather":
+                tensor_b = tensor.detach().clone()
                 self.timed_allreduce(local_rank,rank,tensor,self.payload,world_size)
-                bandwidth = self.timed_gather(local_rank,rank,tensor,self.payload,world_size)
+                bandwidth = self.timed_gather(local_rank,rank,tensor_b,self.payload,world_size)
             case _:
                 raise NotImplementedError("Bandwidth test method not implemented.")
         
