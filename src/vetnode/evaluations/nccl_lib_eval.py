@@ -32,6 +32,7 @@ class NcclLibEval(BaseEval):
     scheduler:  Literal["slurm"]
     payload: BinaryByteSize = '4 GB'
     method: Literal["allreduce"] = "allreduce"
+    topology: Literal["intranode","internode","full"] = "full"
     warmup: NCCLEvalWarmUp
     min_bandwidth: BandwidthSize = '15 GB/s'
     
@@ -66,6 +67,15 @@ class NcclLibEval(BaseEval):
                 world_size = int(os.environ['SLURM_NTASKS'])
             case _:
                 raise NotImplementedError("Support for the rquested scheduler has not been implemented.")
+
+        if self.topology == "internode":
+                world_size = len(nodes)
+                if local_rank != 0:
+                    return True, {"bandwidth": "N/A for non-master ranks in internode topology."}
+        if self.topology == "intranode":
+                world_size = world_size/len(nodes)
+                if rank >= world_size:
+                    return True, {"bandwidth": "N/A for ranks beyond first node intranode topology."}
 
         nccl = ctypes.cdll.LoadLibrary('libnccl.so')
         
