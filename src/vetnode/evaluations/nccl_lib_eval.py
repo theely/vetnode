@@ -70,6 +70,8 @@ class NcclLibEval(BaseEval):
             case _:
                 raise NotImplementedError("Support for the rquested scheduler has not been implemented.")
 
+        print(f"Debug world_size: {world_size}, rank: {rank}, local_rank: {local_rank}, master_node: {master_node}, tasks_per_node: {tasks_per_node}, nodes_count: {nodes_count}")
+
         if self.topology == "internode":
                 world_size = nodes_count
                 if local_rank != 0:
@@ -82,7 +84,7 @@ class NcclLibEval(BaseEval):
 
         nccl = ctypes.cdll.LoadLibrary('libnccl.so')
         
-        print(f"Debug world_size: {world_size}, rank: {rank}, local_rank: {local_rank}, master_node: {master_node}")
+        print(f"Debug world_size: {world_size}, rank: {rank}, local_rank: {local_rank}, master_node: {master_node}, tasks_per_node: {tasks_per_node}, nodes_count: {nodes_count}")
 
         #TODO: re-implement following: https://github.com/vllm-project/vllm/blob/main/vllm/distributed/device_communicators/pynccl_wrapper.py#L49
 
