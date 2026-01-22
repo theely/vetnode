@@ -66,6 +66,7 @@ class NcclLibEval(BaseEval):
                 master_node = nodes[0]
                 world_size = int(os.environ['SLURM_NTASKS'])
                 nodes_count = int(os.environ['SLURM_JOB_NUM_NODES'])
+                tasks_per_node = int(os.environ['SLURM_NTASKS']
             case _:
                 raise NotImplementedError("Support for the rquested scheduler has not been implemented.")
 
@@ -73,7 +74,7 @@ class NcclLibEval(BaseEval):
                 world_size = nodes_count
                 if local_rank != 0:
                     return True, {"bandwidth": "N/A for non-master ranks in internode topology."}
-                rank = int(rank//int(world_size/nodes_count))
+                rank = int(rank//tasks_per_node)
         if self.topology == "intranode":
                 world_size = world_size/nodes_count
                 if rank >= world_size:
