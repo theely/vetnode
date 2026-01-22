@@ -73,7 +73,7 @@ class NcclLibEval(BaseEval):
                 world_size = nodes_count
                 if local_rank != 0:
                     return True, {"bandwidth": "N/A for non-master ranks in internode topology."}
-                rank = rank//(world_size/nodes_count)
+                rank = int(rank//int(world_size/nodes_count))
         if self.topology == "intranode":
                 world_size = world_size/nodes_count
                 if rank >= world_size:
