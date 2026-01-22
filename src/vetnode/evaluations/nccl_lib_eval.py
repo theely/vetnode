@@ -66,7 +66,7 @@ class NcclLibEval(BaseEval):
                 master_node = nodes[0]
                 world_size = int(os.environ['SLURM_NTASKS'])
                 nodes_count = int(os.environ['SLURM_JOB_NUM_NODES'])
-                tasks_per_node = int(os.environ['SLURM_NTASKS'])
+                tasks_per_node = int(world_size/nodes_count)
             case _:
                 raise NotImplementedError("Support for the rquested scheduler has not been implemented.")
 
