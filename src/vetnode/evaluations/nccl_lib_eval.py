@@ -81,6 +81,7 @@ class NcclLibEval(BaseEval):
 
         nccl = ctypes.cdll.LoadLibrary('libnccl.so')
         
+        print(f"Debug world_size: {world_size}, rank: {rank}, local_rank: {local_rank}, master_node: {master_node}")
 
         #TODO: re-implement following: https://github.com/vllm-project/vllm/blob/main/vllm/distributed/device_communicators/pynccl_wrapper.py#L49
 
