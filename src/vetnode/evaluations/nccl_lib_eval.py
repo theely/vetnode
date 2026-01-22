@@ -65,15 +65,16 @@ class NcclLibEval(BaseEval):
                 nodes = asyncio.run(ScontrolCommand().run()).hostnames
                 master_node = nodes[0]
                 world_size = int(os.environ['SLURM_NTASKS'])
+                nodes_count = int(os.environ['SLURM_JOB_NUM_NODES'])
             case _:
                 raise NotImplementedError("Support for the rquested scheduler has not been implemented.")
 
         if self.topology == "internode":
-                world_size = len(nodes)
+                world_size = nodes_count
                 if local_rank != 0:
                     return True, {"bandwidth": "N/A for non-master ranks in internode topology."}
         if self.topology == "intranode":
-                world_size = world_size/len(nodes)
+                world_size = world_size/nodes_count
                 if rank >= world_size:
                     return True, {"bandwidth": "N/A for ranks beyond first node intranode topology."}
 
