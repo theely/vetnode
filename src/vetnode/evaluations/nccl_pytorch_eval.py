@@ -1,7 +1,6 @@
 
 import asyncio
 import datetime
-import os
 from typing import Literal
 import numpy as np 
 from pydantic import BaseModel
@@ -42,24 +41,14 @@ class NcclPytorchEval(BaseEval):
 
     def _check(self)->tuple[bool,dict]:
 
-        local_rank =None
-        rank= None
-        nodes = None
-        master_node = None
-        world_size =None
-        match self.scheduler:
-            case "slurm":
-                rank = int(os.environ["SLURM_PROCID"])
-                local_rank = int(os.environ["SLURM_LOCALID"])
-                nodes = asyncio.run(ScontrolCommand().run()).hostnames
-                master_node = nodes[0]
-                world_size = int(os.environ['SLURM_NTASKS'])
-            case _:
-                raise NotImplementedError("Support for the rquested scheduler has not been implemented.")
+        master_node = self.context.master_addr
+        rank = self.context.rank
+        local_rank = self.context.local_rank
+        world_size = self.context.world_size
 
         dist.init_process_group(
             backend="nccl",
-            init_method="tcp://{}:{}".format(master_node, 6011),
+            init_method="tcp://{}:{}".format(master_node, 6011+self.context.eval_id),
             timeout=datetime.timedelta(seconds=30),
             rank=rank,
             world_size=world_size,
@@ -92,7 +81,7 @@ class NcclPytorchEval(BaseEval):
         
         dist.destroy_process_group()
         
-        return bandwidth > self.min_bandwidth, {"bandwidth":f"{conv_to_GBps(bandwidth):6.2f} GB/s", "rank":rank, "local_rank":local_rank, "world_size":world_size, "mesurment_matrix":mesurment_matrix}
+        return bandwidth > self.min_bandwidth, {"bandwidth":f"{conv_to_GBps(bandwidth):6.2f} GB/s"}
     
     def timed_allreduce_gather(self,local_rank,rank,tensor,size,ranks):
         
