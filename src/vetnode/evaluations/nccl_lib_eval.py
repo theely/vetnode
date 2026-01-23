@@ -1,9 +1,8 @@
-
 import asyncio
 import base64
 import os
 import time
-from typing import Literal
+from typing import Literal, Optional
 import click
 from pydantic import BaseModel
 import ctypes, socket
@@ -52,7 +51,7 @@ class NcclLibEval(BaseEval):
             traceback.print_exc()
 
 
-    def _check(self)->tuple[bool,dict]:
+    def _check(self)->tuple[Optional[bool],dict]:
         local_rank =None
         rank= None
         nodes = None
@@ -70,21 +69,18 @@ class NcclLibEval(BaseEval):
             case _:
                 raise NotImplementedError("Support for the rquested scheduler has not been implemented.")
 
-        print(f"Debug world_size: {world_size}, rank: {rank}, local_rank: {local_rank}, master_node: {master_node}, tasks_per_node: {tasks_per_node}, nodes_count: {nodes_count}")
-
         if self.topology == "internode":
                 world_size = nodes_count
                 if local_rank != 0:
-                    return True, {"bandwidth": "N/A for non-master ranks in internode topology."}
+                    return None, {"bandwidth": "N/A for non-master ranks in internode topology."}
                 rank = int(rank//tasks_per_node)
         if self.topology == "intranode":
                 world_size = world_size/nodes_count
                 if rank >= world_size:
-                    return True, {"bandwidth": "N/A for ranks beyond first node intranode topology."}
+                    return None, {"bandwidth": "N/A for ranks beyond first node intranode topology."}
 
         nccl = ctypes.cdll.LoadLibrary('libnccl.so')
         
-        print(f"Debug world_size: {world_size}, rank: {rank}, local_rank: {local_rank}, master_node: {master_node}, tasks_per_node: {tasks_per_node}, nodes_count: {nodes_count}")
 
         #TODO: re-implement following: https://github.com/vllm-project/vllm/blob/main/vllm/distributed/device_communicators/pynccl_wrapper.py#L49
 
