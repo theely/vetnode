@@ -1,5 +1,5 @@
 
-from typing import  Any, ClassVar, List, Optional, Tuple, Type, TypeVar, Union
+from typing import  Any, ClassVar, List, Optional, Tuple, Type, TypeVar, Union, Literal
 from click import Path
 from pydantic import BaseModel
 from pydantic_settings import (
@@ -19,6 +19,7 @@ class Configuration(BaseSettings):
 
     name:str
     evals:List[EvalConfiguration]
+    scheduler:Literal["slurm"]="slurm"
     pip:Optional[PIPConfig] = PIPConfig()
 
     def __init__(self, path=None, *args, **kwargs):

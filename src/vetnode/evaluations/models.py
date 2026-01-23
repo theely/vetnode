@@ -2,7 +2,7 @@
 
 
 import re
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Literal
 from pydantic import BaseModel, ByteSize
 
 class EvalConfiguration(BaseModel, extra='allow'):
@@ -15,8 +15,19 @@ class Evaluation(BaseModel):
    test_type:str
    passed:bool
    elapsedtime:int
-   metadata:Optional[Dict[str,str]]=None
+   metrics:Optional[Dict[str,str]]=None
 
+class EvalContext(BaseModel):
+    eval_id:int=None
+    nodes:Optional[List[str]]=None
+    local_rank:Optional[int]=None
+    rank:Optional[int]=None
+    world_size:Optional[int]=None
+    nodes_count:Optional[int]=None
+    tasks_per_node:Optional[int]=None
+    master_addr:Optional[str]=None
+    master_port:Optional[int]=None
+    scheduler:Literal["slurm"]="slurm"
 
 class BinaryByteSize(ByteSize):
     byte_sizes = {
