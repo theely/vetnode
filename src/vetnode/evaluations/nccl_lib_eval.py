@@ -1,12 +1,10 @@
 import asyncio
 import base64
-import os
 import time
 from typing import Literal, Optional
 import click
 from pydantic import BaseModel
 import ctypes, socket
-from vetnode.commands.scontrol.scontrol_command import ScontrolCommand
 from vetnode.evaluations.base_eval import BaseEval
 from vetnode.evaluations.models import BandwidthSize, BinaryByteSize
 import numpy as np
@@ -28,7 +26,6 @@ class NcclLibEval(BaseEval):
     name:str
     type: Literal["vetnode.evaluations.nccl_lib_eval.NcclLibEval"]
     requirements: Literal[["cuda-python","numpy"]]
-    scheduler:  Literal["slurm"]
     payload: BinaryByteSize = '4 GB'
     method: Literal["allreduce"] = "allreduce"
     topology: Literal["intranode","internode","full"] = "full"
@@ -52,30 +49,19 @@ class NcclLibEval(BaseEval):
 
 
     def _check(self)->tuple[Optional[bool],dict]:
-        local_rank =None
-        rank= None
-        nodes = None
-        master_node = None
-        world_size =None
-        match self.scheduler:
-            case "slurm":
-                rank = int(os.environ["SLURM_PROCID"])
-                local_rank = int(os.environ["SLURM_LOCALID"])
-                nodes = asyncio.run(ScontrolCommand().run()).hostnames
-                master_node = nodes[0]
-                world_size = int(os.environ['SLURM_NTASKS'])
-                nodes_count = int(os.environ['SLURM_JOB_NUM_NODES'])
-                tasks_per_node = int(world_size/nodes_count)
-            case _:
-                raise NotImplementedError("Support for the rquested scheduler has not been implemented.")
+
+        master_node = self.context.master_addr
+        rank = self.context.rank
+        local_rank = self.context.local_rank
+        world_size = self.context.world_size
 
         if self.topology == "internode":
-                world_size = nodes_count
-                if local_rank != 0:
+                world_size = self.context.nodes_count
+                if self.context.local_rank != 0:
                     return None, {"bandwidth": "N/A for non-master ranks in internode topology."}
-                rank = int(rank//tasks_per_node)
+                rank = int(self.context.rank//self.context.tasks_per_node)
         if self.topology == "intranode":
-                world_size = world_size/nodes_count
+                world_size = int(self.context.world_size//self.context.nodes_count)
                 if rank >= world_size:
                     return None, {"bandwidth": "N/A for ranks beyond first node intranode topology."}
 
@@ -121,7 +107,7 @@ class NcclLibEval(BaseEval):
             nccl.ncclGetUniqueId(ctypes.byref(uid))    
             nccl.ncclGetUniqueId(ctypes.byref(uid_warmup))            
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                s.bind(('0.0.0.0', 13333))
+                s.bind(('0.0.0.0', 13333+self.context.eval_id))
                 s.settimeout(30) #wait 30s for clients to connect
                 s.listen()
                 for _ in range(world_size-1):
@@ -133,7 +119,7 @@ class NcclLibEval(BaseEval):
             for i in range(5):
                 try:
                     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                        s.connect((master_node, 13333))
+                        s.connect((master_node, 13333+self.context.eval_id))
                         s.recv_into(uid)
                         s.recv_into(uid_warmup)
                         break
