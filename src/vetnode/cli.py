@@ -29,6 +29,8 @@ def diagnose(config) -> None:
             traceback.print_tb(result.__traceback__)
             healthy=False
         else:
+            if result.passed is None:
+                continue
             if not result.passed:
                 healthy=False
             click.secho(f"Node: {hostname} \t result:{result}", fg='green' if result.passed else 'red')
