@@ -1,6 +1,5 @@
 from concurrent.futures import ThreadPoolExecutor
 from abc import abstractmethod
-import asyncio
 import time
 from vetnode.evaluations.models import EvalConfiguration, Evaluation, EvalContext
 

@@ -6,14 +6,15 @@ from typing import Literal
 
 from vetnode.evaluations.base_eval import BaseEval
 from ctypes import CDLL
-from cuda import cuda, nvrtc
+
+from cuda.bindings import driver, nvrtc
 import numpy as np
 
 
 def _cudaGetErrorEnum(error):
-    if isinstance(error, cuda.CUresult):
-        err, name = cuda.cuGetErrorName(error)
-        return name if err == cuda.CUresult.CUDA_SUCCESS else "<unknown>"
+    if isinstance(error, driver.CUresult):
+        err, name = driver.cuGetErrorName(error)
+        return name if err == driver.CUresult.CUDA_SUCCESS else "<unknown>"
     else:
         raise RuntimeError('Unknown error type: {}'.format(error))
     
@@ -35,12 +36,12 @@ class CUDAEval(BaseEval):
     cuda_home: str
 
     def verify(self)->bool:
-        libc = CDLL(f"{self.cuda_home}/libnvrtc.so")
+        libc = CDLL(f"{self.cuda_home}/lib64/libnvrtc.so")
         if libc is None:
             return False
-        for filename in os.listdir(self.cuda_home):
+        for filename in os.listdir(f"{self.cuda_home}/lib64"):
             if filename.endswith(".so"):
-                lib_path = os.path.join(self.cuda_home, filename)
+                lib_path = os.path.join(f"{self.cuda_home}/lib64", filename)
                 CDLL(f"{lib_path}")
         return True
 
@@ -51,77 +52,95 @@ class CUDAEval(BaseEval):
 
     def _check(self)->tuple[bool,dict]:
 
-        (err,) = cuda.cuInit(0)
+        (err,) = driver.cuInit(0)
         self.checkCudaErrors(err)
 
-        err, ndevice = cuda.cuDeviceGetCount()
+        err, drv_version = driver.cuDriverGetVersion()
+
+        err, nvrtc_major, nvrtc_minor = nvrtc.nvrtcVersion()
+
+        err, ndevice = driver.cuDeviceGetCount()
         self.checkCudaErrors(err)
 
-        err, cuDevice = cuda.cuDeviceGet(0)
+        err, cuDevice = driver.cuDeviceGet(0)
         self.checkCudaErrors(err)
 
 
-        err, major = cuda.cuDeviceGetAttribute(cuda.CUdevice_attribute.CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MAJOR, cuDevice)
+        err, major = driver.cuDeviceGetAttribute(driver.CUdevice_attribute.CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MAJOR, cuDevice)
         self.checkCudaErrors(err)
-        err, minor = cuda.cuDeviceGetAttribute(cuda.CUdevice_attribute.CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MINOR, cuDevice)
+        err, minor = driver.cuDeviceGetAttribute(driver.CUdevice_attribute.CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MINOR, cuDevice)
         self.checkCudaErrors(err)
 
-        arch_arg = bytes(f'--gpu-architecture=compute_{major}{minor}', 'ascii')
-
+        arch_arg = bytes(f"--gpu-architecture=compute_{major}{minor}", "ascii")
         err, prog =nvrtc.nvrtcCreateProgram(str.encode(saxpy), b"saxpy.cu", 0, [], [])
         self.checkCudaErrors(err)
 
-        opts = [b"--fmad=false", arch_arg]
-        (err, )=nvrtc.nvrtcCompileProgram(prog, 2, opts)
+        opts = [
+                b"--fmad=false",
+                #b'--ptx-version=8.1',  # Explicitly set PTX version
+                arch_arg
+        ]
+
+        (err, )=nvrtc.nvrtcCompileProgram(prog, len(opts), opts)
         self.checkCudaErrors(err)
 
         # Get PTX from compilation
         err, ptxSize = nvrtc.nvrtcGetPTXSize(prog)
         self.checkCudaErrors(err)
-        ptx = b" " * ptxSize
+        ptx = b"\x00" * ptxSize
         (err, )= nvrtc.nvrtcGetPTX(prog, ptx)
         self.checkCudaErrors(err)
 
 
         # Create context
-        err, context = cuda.cuCtxCreate(0, cuDevice)
+        ctxParams = driver.CUctxCreateParams()  # Default initialized
+        err, context = driver.cuCtxCreate(ctxParams,0, cuDevice)
 
         # Load PTX as module data and retrieve function
-        ptx = np.char.array(ptx)
+        #ptx = np.char.array(ptx)
         # Note: Incompatible --gpu-architecture would be detected here
-        err,module = cuda.cuModuleLoadData(ptx.ctypes.data)
+        err,module = driver.cuModuleLoadData(ptx)
         self.checkCudaErrors(err)
-        err, kernel = cuda.cuModuleGetFunction(module, b"saxpy")
+        err, kernel = driver.cuModuleGetFunction(module, b"saxpy")
         self.checkCudaErrors(err)
 
-        NUM_THREADS = 512  # Threads per block
-        NUM_BLOCKS = 32768  # Blocks per grid
+        NUM_THREADS = 512
+        NUM_BLOCKS = 32768
 
-        a = np.array([2.0], dtype=np.float32)
+        # Scalar values
+        a_host = np.array([2.0], dtype=np.float32)
         n = np.array(NUM_THREADS * NUM_BLOCKS, dtype=np.uint32)
-        bufferSize = n * a.itemsize
+        bufferSize = n * a_host.itemsize
 
-        hX = np.random.rand(n).astype(dtype=np.float32)
-        hY = np.random.rand(n).astype(dtype=np.float32)
-        hOut = np.zeros(n).astype(dtype=np.float32)
+        # Host arrays
+        hX = np.random.rand(n).astype(np.float32)
+        hY = np.random.rand(n).astype(np.float32)
+        hOut = np.zeros(n, dtype=np.float32)
 
-        err, dXclass = cuda.cuMemAlloc(bufferSize)
-        err, dYclass = cuda.cuMemAlloc(bufferSize)
-        err, dOutclass = cuda.cuMemAlloc(bufferSize)
+        # Allocate device memory
+        err, dX = driver.cuMemAlloc(bufferSize)
+        err, dY = driver.cuMemAlloc(bufferSize)
+        err, dOut = driver.cuMemAlloc(bufferSize)
 
-        err, stream = cuda.cuStreamCreate(0)
+        # Create stream
+        err, stream = driver.cuStreamCreate(0)
 
-        cuda.cuMemcpyHtoDAsync(dXclass, hX.ctypes.data, bufferSize, stream)
-        cuda.cuMemcpyHtoDAsync(dYclass, hY.ctypes.data, bufferSize, stream)
+        # Copy data to device
+        err, = driver.cuMemcpyHtoDAsync(dX, hX.ctypes.data, bufferSize, stream)
+        err, = driver.cuMemcpyHtoDAsync(dY, hY.ctypes.data, bufferSize, stream)
 
-        dX = np.array([int(dXclass)], dtype=np.uint64)
-        dY = np.array([int(dYclass)], dtype=np.uint64)
-        dOut = np.array([int(dOutclass)], dtype=np.uint64)
+        # Setup kernel arguments as array of pointers
+        # Each element points to the actual argument value
+        dX_ptr = np.array([int(dX)], dtype=np.uint64)
+        dY_ptr = np.array([int(dY)], dtype=np.uint64)
+        dOut_ptr = np.array([int(dOut)], dtype=np.uint64)
 
-        args = [a, dX, dY, dOut, n]
+        # Array of pointers to arguments
+        args = [a_host, dX_ptr, dY_ptr, dOut_ptr, n]
         args = np.array([arg.ctypes.data for arg in args], dtype=np.uint64)
 
-        (err,) = cuda.cuLaunchKernel(
+        # Launch kernel
+        err, = driver.cuLaunchKernel(
             kernel,
             NUM_BLOCKS,  # grid x dim
             1,  # grid y dim
@@ -136,23 +155,25 @@ class CUDAEval(BaseEval):
         )
         self.checkCudaErrors(err)
 
-        cuda.cuMemcpyDtoHAsync(hOut.ctypes.data, dOutclass, bufferSize, stream)
-        cuda.cuStreamSynchronize(stream)
-
-        hZ = a * hX + hY
-        if not np.allclose(hOut, hZ):
-            raise ValueError("Error outside tolerance for host-device vectors")
+        driver.cuMemcpyDtoHAsync(hOut.ctypes.data, dOut, bufferSize, stream)
+        driver.cuStreamSynchronize(stream)
         
-        cuda.cuStreamDestroy(stream)
-        cuda.cuMemFree(dXclass)
-        cuda.cuMemFree(dYclass)
-        cuda.cuMemFree(dOutclass)
-        cuda.cuModuleUnload(module)
-        cuda.cuCtxDestroy(context)
+        hZ = a_host * hX + hY
 
-        return True,None
+
+        if not np.allclose(hOut, hZ):
+            return False,{"error":"outside tolerance for host-device vectors","cuda_version":drv_version, "NVRTC_version": f"{nvrtc_major}.{nvrtc_minor}"}
+        
+        driver.cuStreamDestroy(stream)
+        driver.cuMemFree(dX)
+        driver.cuMemFree(dY)
+        driver.cuMemFree(dOut)
+        driver.cuModuleUnload(module)
+        driver.cuCtxDestroy(context)
+
+        return True,{"cuda_version":drv_version, "NVRTC_version": f"{nvrtc_major}.{nvrtc_minor}"}
 
     def checkCudaErrors(self, err):
-        if err != cuda.CUresult.CUDA_SUCCESS:
+        if err != driver.CUresult.CUDA_SUCCESS:
             raise RuntimeError("CUDA error code={}({})".format(err, _cudaGetErrorEnum(err)))
         
