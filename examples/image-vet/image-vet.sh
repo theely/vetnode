@@ -33,8 +33,8 @@ mounts = [
     "/iopsstor/",
     "/tmp",
     # Options for simulated built-in OFI NCCL plugin
-    "/opt/cscs/aws-ofi-ccl-plugin/cuda-dl/libnccl-net.so:/usr/lib/libnccl-net-oficscs.so",
-    "/opt/cscs/aws-ofi-ccl-plugin/cuda-dl/libnccl-net.so:/opt/hpcx/nccl_rdma_sharp_plugin/lib/libnccl-net.so" 
+    # "/opt/cscs/aws-ofi-ccl-plugin/cuda-dl/libnccl-net.so:/usr/lib/libnccl-net-oficscs.so",
+    # "/opt/cscs/aws-ofi-ccl-plugin/cuda-dl/libnccl-net.so:/opt/hpcx/nccl_rdma_sharp_plugin/lib/libnccl-net.so" 
 ]
 
 writable = true
@@ -126,8 +126,8 @@ srun -N ${SLURM_JOB_NUM_NODES} --tasks-per-node=1 -u --environment=${ENV_FILE} -
 srun -N ${SLURM_JOB_NUM_NODES} --tasks-per-node=4 -u --environment=${ENV_FILE} --container-writable bash -c '
     
     #Enable logging
-    export NCCL_DEBUG=INFO
-    export NCCL_DEBUG_SUBSYS=INIT,NET	
+    # export NCCL_DEBUG=INFO
+    # export NCCL_DEBUG_SUBSYS=INIT,NET	
 
     echo "[image-vet] diagnose"
     cd /tmp
