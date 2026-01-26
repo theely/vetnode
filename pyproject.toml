@@ -1,6 +1,6 @@
 [project]
 name = "VetNode"
-version = "0.0.8"
+version = "0.0.9"
 authors = [
   { name="Elia Palme", email="elia.palme@cscs.ch" },
 ]

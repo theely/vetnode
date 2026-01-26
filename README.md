@@ -99,6 +99,8 @@ pytest
 
 ## Distribute
 
+Update version in pyproject.toml file.
+
 ```
 pip install -r ./requirements-testing.txt
 python3 -m build --wheel
