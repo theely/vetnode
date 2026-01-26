@@ -32,6 +32,9 @@ mounts = [
     "/capstor/",
     "/iopsstor/",
     "/tmp",
+    # Options for simulated built-in OFI NCCL plugin
+    "/opt/cscs/aws-ofi-ccl-plugin/cuda-dl/libnccl-net.so:/usr/lib/libnccl-net-oficscs.so",
+    "/opt/cscs/aws-ofi-ccl-plugin/cuda-dl/libnccl-net.so:/opt/hpcx/nccl_rdma_sharp_plugin/lib/libnccl-net.so" 
 ]
 
 writable = true
