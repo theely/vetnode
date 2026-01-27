@@ -71,7 +71,7 @@ evals:
   scheduler: slurm
   payload: 8 GB
   method: allreduce
-  min_bandwidth: 300 GB/s
+  min_bandwidth: 20 GB/s
   warmup:
     payload: 256 MB
     runs: 2
@@ -82,7 +82,7 @@ evals:
   scheduler: slurm
   payload: 8 GB
   method: allreduce
-  min_bandwidth: 18 GB/s
+  min_bandwidth: 300 GB/s
   warmup:
     payload: 256 MB
     runs: 2
