@@ -36,13 +36,14 @@ class CUDAEval(BaseEval):
     cuda_home: str
 
     def verify(self)->bool:
-        #libc = CDLL(f"{self.cuda_home}/lib64/libnvrtc.so")
-        #if libc is None:
-        #    return False
-        #for filename in os.listdir(f"{self.cuda_home}/lib64"):
-        #    if filename.endswith(".so"):
-        #        lib_path = os.path.join(f"{self.cuda_home}/lib64", filename)
-        #        CDLL(f"{lib_path}")
+        libc = CDLL(f"{self.cuda_home}/lib64/libnvrtc.so")
+        if libc is None:
+            return False
+        CDLL(f"{self.cuda_home}/compat/libcuda.so")
+        for filename in os.listdir(f"{self.cuda_home}/lib64"):
+            if filename.endswith(".so"):
+                lib_path = os.path.join(f"{self.cuda_home}/lib64", filename)
+                CDLL(f"{lib_path}")
         return True
 
 
@@ -96,7 +97,7 @@ class CUDAEval(BaseEval):
         ctxParams = driver.CUctxCreateParams()  # Default initialized
         err, context = driver.cuCtxCreate(ctxParams,0, cuDevice)
         self.checkCudaErrors(err)
-
+        
         err, = driver.cuCtxSetCurrent(context)
         self.checkCudaErrors(err)
 
