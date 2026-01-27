@@ -32,14 +32,13 @@ void saxpy(float a, float *x, float *y, float *out, size_t n)
 class CUDAEval(BaseEval):
     name:str
     type: Literal["vetnode.evaluations.cuda_eval.CUDAEval"]
-    requirements: Literal[["cuda-python","numpy"]]
+    requirements: Literal[["cuda-python==12.*","numpy"],["cuda-python==13.*","numpy"]]
     cuda_home: str
 
     def verify(self)->bool:
         libc = CDLL(f"{self.cuda_home}/lib64/libnvrtc.so")
         if libc is None:
             return False
-        CDLL(f"{self.cuda_home}/compat/libcuda.so")
         for filename in os.listdir(f"{self.cuda_home}/lib64"):
             if filename.endswith(".so"):
                 lib_path = os.path.join(f"{self.cuda_home}/lib64", filename)
@@ -94,8 +93,12 @@ class CUDAEval(BaseEval):
 
 
         # Create context
-        ctxParams = driver.CUctxCreateParams()  # Default initialized
-        err, context = driver.cuCtxCreate(ctxParams,0, cuDevice)
+        if major >= 13:
+            ctxParams = driver.CUctxCreateParams()  # Default initialized
+            err, context = driver.cuCtxCreate(ctxParams,0, cuDevice)
+        else:
+            err, context = driver.cuCtxCreate(0, cuDevice)
+        
         self.checkCudaErrors(err)
         
         err, = driver.cuCtxSetCurrent(context)
