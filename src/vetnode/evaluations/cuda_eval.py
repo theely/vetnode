@@ -95,7 +95,8 @@ class CUDAEval(BaseEval):
         # Create context
         ctxParams = driver.CUctxCreateParams()  # Default initialized
         err, context = driver.cuCtxCreate(ctxParams,0, cuDevice)
-
+        self.checkCudaErrors(err)
+        
         err, = driver.cuCtxSetCurrent(context)
         self.checkCudaErrors(err)
 
