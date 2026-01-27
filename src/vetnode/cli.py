@@ -26,7 +26,7 @@ def build_context(configuration:Configuration)->EvalContext:
                 eval_context.world_size = int(os.environ['SLURM_NTASKS'])
                 eval_context.nodes_count = int(os.environ['SLURM_JOB_NUM_NODES'])
                 eval_context.tasks_per_node = int(eval_context.world_size/eval_context.nodes_count)
-            case None:
+            case "standalone":
                 eval_context.rank=None
                 eval_context.local_rank = None
                 eval_context.nodes = None

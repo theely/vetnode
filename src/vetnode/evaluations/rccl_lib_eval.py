@@ -41,7 +41,7 @@ class RcclLibEval(BaseEval):
             if libc is None:
                 return False
         
-        if self.context.scheduler is None:
+        if self.context.scheduler == "standalone" or self.context.scheduler is None:
             click.echo("RcclLibEval requires to be run under a supported scheduler (e.g., slurm).")
             return False
         

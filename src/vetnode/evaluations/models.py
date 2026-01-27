@@ -27,7 +27,7 @@ class EvalContext(BaseModel):
     tasks_per_node:Optional[int]=None
     master_addr:Optional[str]=None
     master_port:Optional[int]=None
-    scheduler:Literal["slurm", None]="slurm"
+    scheduler:Literal["slurm", "standalone"]="slurm"
 
 class BinaryByteSize(ByteSize):
     byte_sizes = {

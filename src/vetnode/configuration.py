@@ -19,7 +19,7 @@ class Configuration(BaseSettings):
 
     name:str
     evals:List[EvalConfiguration]
-    scheduler:Literal["slurm", None]="slurm"
+    scheduler:Literal["slurm", "standalone"]="slurm"
     pip:Optional[PIPConfig] = PIPConfig()
 
     def __init__(self, path=None, *args, **kwargs):

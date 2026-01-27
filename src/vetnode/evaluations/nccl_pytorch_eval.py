@@ -34,7 +34,7 @@ class NcclPytorchEval(BaseEval):
     min_bandwidth: BandwidthSize = '15 GB/s'
     
     def verify(self)->bool:
-        if self.context.scheduler is None:
+        if self.context.scheduler == "standalone" or self.context.scheduler is None:
             click.echo("NcclPytorchEval requires to be run under a supported scheduler (e.g., slurm).")
             return False
         
