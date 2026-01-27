@@ -96,6 +96,9 @@ class CUDAEval(BaseEval):
         ctxParams = driver.CUctxCreateParams()  # Default initialized
         err, context = driver.cuCtxCreate(ctxParams,0, cuDevice)
 
+        err, = driver.cuCtxSetCurrent(context)
+        self.checkCudaErrors(err)
+
         # Load PTX as module data and retrieve function
         #ptx = np.char.array(ptx)
         # Note: Incompatible --gpu-architecture would be detected here
