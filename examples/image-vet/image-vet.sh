@@ -63,7 +63,7 @@ evals:
   type: vetnode.evaluations.cuda_eval.CUDAEval
   cuda_home: /usr/local/cuda 
   requirements:
-    - cuda-python
+    - cuda-python==13.*
     - numpy
 - name: NCCL-Low-Level-Internode
   type: vetnode.evaluations.nccl_lib_eval.NcclLibEval
