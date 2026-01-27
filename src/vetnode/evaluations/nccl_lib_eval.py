@@ -38,6 +38,11 @@ class NcclLibEval(BaseEval):
             libc = ctypes.CDLL(lib)
             if libc is None:
                 return False
+        
+        if self.context.scheduler is None:
+            click.echo("NcclLibEval requires to be run under a supported scheduler (e.g., slurm).")
+            return False
+
         return True
 
     async def check(self,executor)->bool:

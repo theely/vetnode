@@ -15,6 +15,7 @@ from pydoc import locate
 
 def build_context(configuration:Configuration)->EvalContext:
     eval_context:EvalContext    = EvalContext()
+    eval_context.scheduler = configuration.scheduler
     match configuration.scheduler:
             case "slurm":
                 eval_context.rank=int(os.environ["SLURM_PROCID"])
@@ -25,6 +26,15 @@ def build_context(configuration:Configuration)->EvalContext:
                 eval_context.world_size = int(os.environ['SLURM_NTASKS'])
                 eval_context.nodes_count = int(os.environ['SLURM_JOB_NUM_NODES'])
                 eval_context.tasks_per_node = int(eval_context.world_size/eval_context.nodes_count)
+            case None:
+                eval_context.rank=None
+                eval_context.local_rank = None
+                eval_context.nodes = None
+                eval_context.master_addr = None
+                eval_context.master_port = None
+                eval_context.world_size = None
+                eval_context.nodes_count = None
+                eval_context.tasks_per_node = None
             case _:
                 raise NotImplementedError("Support for the rquested scheduler has not been implemented.")
     return eval_context

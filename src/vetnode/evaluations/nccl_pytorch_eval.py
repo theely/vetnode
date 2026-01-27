@@ -4,7 +4,7 @@ import datetime
 from typing import Literal
 import numpy as np 
 from pydantic import BaseModel
-
+import click
 
 from vetnode.commands.scontrol.scontrol_command import ScontrolCommand
 from vetnode.evaluations.base_eval import BaseEval
@@ -32,7 +32,12 @@ class NcclPytorchEval(BaseEval):
     method: Literal["broadcast","roundrobin","allreduce","gather","allreduce-gather"] = "broadcast"
     warmup: NCCLEvalWarmUp
     min_bandwidth: BandwidthSize = '15 GB/s'
+    
     def verify(self)->bool:
+        if self.context.scheduler is None:
+            click.echo("NcclPytorchEval requires to be run under a supported scheduler (e.g., slurm).")
+            return False
+        
         return True
 
     async def check(self,executor)->bool:
