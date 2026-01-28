@@ -40,12 +40,12 @@ mounts = [
 writable = true
 
 # Options for built-in OFI NCCL plugin
-[env]
-NCCL_NET_PLUGIN = "oficscs"
-NCCL_NET = "AWS Libfabric"
-NCCL_CROSS_NIC = "1"
-NCCL_NET_GDR_LEVEL = "PHB"
-OFI_NCCL_DISABLE_DMABUF = "1"
+# [env]
+# NCCL_NET_PLUGIN = "oficscs"
+# NCCL_NET = "AWS Libfabric"
+# NCCL_CROSS_NIC = "1"
+# NCCL_NET_GDR_LEVEL = "PHB"
+# OFI_NCCL_DISABLE_DMABUF = "1"
 
 # Options for OFI NCCL plugin via hooks
 #[annotations]
@@ -54,63 +54,7 @@ OFI_NCCL_DISABLE_DMABUF = "1"
 
 EOF
 
-
-cat > config.yaml <<- EOF
-name: Image Vetting
-scheduler: slurm
-evals:
-- name: CudaKernel
-  type: vetnode.evaluations.cuda_eval.CUDAEval
-  cuda_home: /usr/local/cuda 
-  requirements:
-    - cuda-python==13.*
-    - numpy
-- name: NCCL-Low-Level-Internode
-  type: vetnode.evaluations.nccl_lib_eval.NcclLibEval
-  topology: internode
-  scheduler: slurm
-  payload: 8 GB
-  method: allreduce
-  min_bandwidth: 20 GB/s
-  warmup:
-    payload: 256 MB
-    runs: 2
-  requirements: ["cuda-python","numpy"]
-- name: NCCL-Low-Level-Intranode
-  type: vetnode.evaluations.nccl_lib_eval.NcclLibEval
-  topology: intranode
-  scheduler: slurm
-  payload: 8 GB
-  method: allreduce
-  min_bandwidth: 200 GB/s
-  warmup:
-    payload: 256 MB
-    runs: 2
-  requirements: ["cuda-python","numpy"]
-- name: NCCL-Low-Level-Full-Topology
-  type: vetnode.evaluations.nccl_lib_eval.NcclLibEval
-  scheduler: slurm
-  payload: 8 GB
-  method: allreduce
-  min_bandwidth: 50 GB/s
-  warmup:
-    payload: 256 MB
-    runs: 2
-  requirements: ["cuda-python","numpy"]
-- name: NCCL-PyTorch
-  type: vetnode.evaluations.nccl_pytorch_eval.NcclPytorchEval
-  scheduler: slurm
-  payload: 8 GB
-  method: allreduce
-  min_bandwidth: 100 GB/s
-  warmup:
-    payload: 256 MB
-    runs: 2
-  requirements:
-      - ['torch', '--index-url', 'https://download.pytorch.org/whl/cu130']
-      - numpy
-EOF
-
+wget -O config.yaml https://raw.githubusercontent.com/theely/vetnode/refs/heads/main/examples/image-vet/config.yaml
 sbcast config.yaml /tmp/config.yaml
 
 srun -N ${SLURM_JOB_NUM_NODES} --tasks-per-node=1 -u --environment=${ENV_FILE} --container-writable bash -c '

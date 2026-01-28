@@ -1,0 +1,53 @@
+name: Image Vetting
+scheduler: slurm
+evals:
+- name: CudaKernel
+  type: vetnode.evaluations.cuda_eval.CUDAEval
+  cuda_home: /usr/local/cuda 
+  requirements:
+    - cuda-python==13.*
+    - numpy
+- name: NCCL-Low-Level-Internode
+  type: vetnode.evaluations.nccl_lib_eval.NcclLibEval
+  topology: internode
+  scheduler: slurm
+  payload: 8 GB
+  method: allreduce
+  min_bandwidth: 20 GB/s
+  warmup:
+    payload: 256 MB
+    runs: 2
+  requirements: ["cuda-python","numpy"]
+- name: NCCL-Low-Level-Intranode
+  type: vetnode.evaluations.nccl_lib_eval.NcclLibEval
+  topology: intranode
+  scheduler: slurm
+  payload: 8 GB
+  method: allreduce
+  min_bandwidth: 200 GB/s
+  warmup:
+    payload: 256 MB
+    runs: 2
+  requirements: ["cuda-python","numpy"]
+- name: NCCL-Low-Level-Full-Topology
+  type: vetnode.evaluations.nccl_lib_eval.NcclLibEval
+  scheduler: slurm
+  payload: 8 GB
+  method: allreduce
+  min_bandwidth: 50 GB/s
+  warmup:
+    payload: 256 MB
+    runs: 2
+  requirements: ["cuda-python","numpy"]
+- name: NCCL-PyTorch
+  type: vetnode.evaluations.nccl_pytorch_eval.NcclPytorchEval
+  scheduler: slurm
+  payload: 8 GB
+  method: allreduce
+  min_bandwidth: 100 GB/s
+  warmup:
+    payload: 256 MB
+    runs: 2
+  requirements:
+      - ['torch', '--index-url', 'https://download.pytorch.org/whl/cu130']
+      - numpy
