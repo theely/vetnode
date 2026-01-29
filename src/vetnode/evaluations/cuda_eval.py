@@ -91,9 +91,10 @@ class CUDAEval(BaseEval):
         (err, )= nvrtc.nvrtcGetPTX(prog, ptx)
         self.checkCudaErrors(err)
 
-
+        err, version = driver.cuDriverGetVersion()
+        self.checkCudaErrors(err)
         # Create context
-        if major >= 13:
+        if version >= 1300:
             ctxParams = driver.CUctxCreateParams()  # Default initialized
             err, context = driver.cuCtxCreate(ctxParams,0, cuDevice)
         else:
