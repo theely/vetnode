@@ -180,7 +180,7 @@ class CUDAEval(BaseEval):
         driver.cuModuleUnload(module)
         driver.cuCtxDestroy(context)
 
-        return True,{"cuda_version":drv_version, "NVRTC_version": f"{nvrtc_major}.{nvrtc_minor}"}
+        return True,{"cuda_version":f"{drv_version}", "NVRTC_version": f"{nvrtc_major}.{nvrtc_minor}"}
 
     def checkCudaErrors(self, err):
         if err != driver.CUresult.CUDA_SUCCESS:

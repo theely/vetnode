@@ -10,11 +10,13 @@ class EvalConfiguration(BaseModel, extra='allow'):
     type:str
     requirements:Optional[List[str | List[str]]]=None
 
-class Evaluation(BaseModel):
-   test_name:str
-   test_type:str
+class EvalResult(BaseModel):
+   rank:int
+   eval_id:int
+   eval_name:str
+   eval_type:str
    passed:bool
-   elapsedtime:int
+   elapsedtime:float
    metrics:Optional[Dict[str,str]]=None
 
 class EvalContext(BaseModel):
