@@ -4,7 +4,7 @@ import click
 import traceback
 import socket  
 from vetnode.configuration import Configuration
-from vetnode.evaluations.models import EvalConfiguration,EvalContext,EvalResult
+from vetnode.evaluations.models import EvalConfiguration,EvalContext,EvalResult,EvalResultStatus
 import os
 from vetnode.commands.scontrol.scontrol_command import ScontrolCommand
 import asyncio
@@ -50,11 +50,15 @@ def diagnose(config) -> None:
     configuration = Configuration()
     main_context= build_context(configuration)
     
-    click.echo(f"Running sanity checks: {configuration.name} on node:{hostname}")
     evals = load_evals(main_context, configuration.evals)
     processes = asyncio.run(run_evals(main_context,evals))
     healthy:bool=True
     for results in processes:
+        if isinstance(results, Exception):
+            click.secho(f"Node: {hostname} \t unexpected exception: {results}", fg='red')
+            traceback.print_tb(results.__traceback__)
+            healthy=False
+            continue
         if isinstance(results, List):
             for result in results:
                 if isinstance(result, Exception):
@@ -62,11 +66,11 @@ def diagnose(config) -> None:
                     traceback.print_tb(result.__traceback__)
                     healthy=False
                 else:
-                    if result.passed is None:
-                        continue
-                    if not result.passed:
+                    if not result.status == EvalResultStatus.SUCCESS and not result.status == EvalResultStatus.SKIPPED:
                         healthy=False
-                    click.secho(f"Node: {hostname} \t result:{result}", fg='green' if result.passed else 'red')
+                    click.secho(f"Node: {hostname} \t result:{result}", fg='green' if result.status == EvalResultStatus.SUCCESS else 'red')
+            continue
+        click.secho(f"Node: {hostname} \t result:{results}", fg='red')
 
     if healthy:
         click.echo(f"Vetted: {hostname}")
@@ -123,24 +127,19 @@ async def run_evals_worker(main_context,evals):
             try:
                 while True:
                     i = await recv_int(reader)
-                    print(f"recived int: {i}")
                     if i == -1:
                         return results
 
-                    await asyncio.sleep(1.0)
-                    
                     eval = evals[i]
-                    click.secho(f"Starting evaluation {eval.name}", fg='blue')
-                    result = None
+                    result = EvalResult(rank=main_context.rank, eval_id=i)
                     try:
                         if eval.verify():
                             result = await eval.eval()
                             results.append(result)
                     except Exception as ex:
                         click.secho(f"Skipped: {eval.name} (error: {ex})", fg='red')
-                    str = result.model_dump_json()
-                    click.secho(f"Sending result: {str}", fg='red')
-                    await send_str(writer, f"{str}\n")
+                    finally:
+                        await send_str(writer, f"{result.model_dump_json()}")
             finally:
                 writer.close()
                 await writer.wait_closed()
@@ -160,41 +159,54 @@ async def synchronize_workers(main_context,evals):
     clients = []  # [(reader, writer)]
     results = [[None] * main_context.world_size  for _ in range(len(evals))]  # Initialize results list with None values
     run = True
-    print(f"results init: {results}")
     async def handle_client(reader, writer):
         clients.append((reader, writer))
-        click.secho(f"Worker ready ({len(clients)}/{main_context.world_size})", fg='green')
-        while run:
-            try:
-                result_json = await recv_str(reader)
-                click.secho(f"Received result from worker: {result_json}", fg='white')
-                result = EvalResult.model_validate_json(result_json)
-                results[result.eval_id][result.rank] = result
-            except Exception as e:
-                click.secho(f"Worker disconnected. Error: {e}", fg='red')
-                break
+        click.secho(" ✅ ", fg='green', nl=False)
+        await asyncio.Event().wait()  # keep handler alive
+        #while run:
+        #    try:
+        #        result_json = await recv_str(reader)
+        #        click.secho(f"Received result from worker: {result_json}", fg='white')
+        #        result = EvalResult.model_validate_json(result_json)
+        #        results[result.eval_id][result.rank] = result
+        #    except Exception as e:
+        #        click.secho(f"Worker disconnected. Error: {e}", fg='red')
+        #        break
 
 
     server = await asyncio.start_server(handle_client, '0.0.0.0', main_context.master_port)
-    click.secho(f"Waiting for {main_context.world_size} workers", fg='white')
     async with server:
+        click.secho(f"Worker ready: ", fg='green', nl=False)
         while len(clients) < main_context.world_size:
             await asyncio.sleep(0.2)
-
+        click.echo("")
         for i in range(len(evals)):
 
             # Send task index
-            click.secho(f"\nEvaluating {evals[i].name}:", fg='blue')
+            click.secho(f"\nEvaluating {evals[i].name}:", fg='blue',nl=False)
             for _, writer in clients:
                 await send_int(writer, i)
 
-            # Wait for all clients
-            while run:
-                await asyncio.sleep(5.0)
-                print(f"results: {results}")
-                if sum(result is not None for result in results[i]) >= main_context.world_size:
-                    break
-                
+            
+            for reader, _ in clients:
+                result_json = await recv_str(reader)
+                try:
+                    result = EvalResult.model_validate_json(result_json)
+                except Exception as e:
+                    click.secho(f"Error validating result JSON: {e}", fg='red')
+                    continue
+                match result.status:
+                    case EvalResultStatus.SUCCESS:
+                        click.secho(" ✅ ", fg='green', nl=False)
+                    case EvalResultStatus.FAILED:
+                        click.secho(" ❌ ", fg='red', nl=False)
+                    case EvalResultStatus.SKIPPED:
+                        click.secho(" ⏭️ ", fg='blue', nl=False)
+                    case _:
+                        click.secho(" ❓ ", fg='red', nl=False)
+                results[result.eval_id][result.rank] = result
+            
+            click.echo("")         
 
         # Shutdown
         print("Shutting down master")
