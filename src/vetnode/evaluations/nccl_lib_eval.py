@@ -63,12 +63,12 @@ class NcclLibEval(BaseEval):
         if self.topology == "internode":
                 world_size = self.context.nodes_count
                 if self.context.local_rank != 0:
-                    return None, {"bandwidth": "N/A for non-master ranks in internode topology."}
+                    return True, {"bandwidth": "N/A for non-master ranks in internode topology."}
                 rank = int(self.context.rank//self.context.tasks_per_node)
         if self.topology == "intranode":
                 world_size = int(self.context.world_size//self.context.nodes_count)
                 if rank >= world_size:
-                    return None, {"bandwidth": "N/A for ranks beyond first node intranode topology."}
+                    return True, {"bandwidth": "N/A for ranks beyond first node intranode topology."}
 
         nccl = ctypes.cdll.LoadLibrary('libnccl.so')
         
